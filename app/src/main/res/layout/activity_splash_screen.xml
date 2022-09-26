@@ -5,15 +5,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bt_color_gradient"
+    android:background="@color/white"
+    android:fitsSystemWindows="true"
     tools:context="com.dowell.dowellmap.activity.SplashActivity">
 
 
     <ImageView
         android:id="@+id/img_logo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_betatutor_splash_logo"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="34dp"
+        android:layout_marginEnd="34dp"
+        android:src="@drawable/app_splash__logo"
         app:layout_constraintBottom_toTopOf="@+id/txt_version"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
