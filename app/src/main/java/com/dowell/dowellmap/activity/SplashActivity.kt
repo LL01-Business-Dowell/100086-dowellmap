@@ -4,14 +4,10 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import androidx.lifecycle.Observer
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.lifecycleScope
 import androidx.viewbinding.BuildConfig
 import com.dowell.dowellmap.databinding.ActivitySplashScreenBinding
+import com.dowell.dowellmap.startNewActivity
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class SplashActivity : BaseActivity() {
