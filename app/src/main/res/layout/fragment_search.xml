@@ -27,6 +27,7 @@
             style="@style/EditTextStyle"
             android:theme="@style/Theme.DowellMap"
             app:queryHint="search location"
+            app:searchHintIcon="@drawable/ic_search_icon_light"
             android:iconifiedByDefault="false"
             android:layout_width="0dp"
             android:layout_height="46dp"
