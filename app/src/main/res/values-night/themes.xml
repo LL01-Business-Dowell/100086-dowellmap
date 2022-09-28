@@ -14,4 +14,11 @@
         <!-- Customize your theme here. -->
 
     </style>
+
+    <style name="EditTextStyle" parent="Theme.DowellMap">
+        <item name="android:textColorHint">@android:color/darker_gray</item>
+        <item name="android:textColor">@android:color/darker_gray</item>
+        <item name="searchIcon">@drawable/ic_search_icon_light</item>
+       <item name="android:background">@drawable/edit_text_dark_bg</item>
+    </style>
 </resources>

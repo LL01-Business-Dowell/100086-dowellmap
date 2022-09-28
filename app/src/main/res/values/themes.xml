@@ -17,7 +17,14 @@
 
         <item name="colorControlNormal">@android:color/white</item>
         <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:editTextColor">@android:color/darker_gray</item>
 
     </style>
 
+    <style name="EditTextStyle" parent="Theme.DowellMap">
+        <item name="android:textColorHint">@android:color/darker_gray</item>
+        <item name="android:textColor">@android:color/darker_gray</item>
+        <item name="searchIcon">@drawable/ic_search_icon_light</item>
+        <item name="android:background">@drawable/edit_text_light_bg</item>
+    </style>
 </resources>
