@@ -9,7 +9,8 @@
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_splash_screen.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_map.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/fragment_search.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_search.xml" value="0.16560509554140126" />
+        <entry key="app/src/main/res/layout/location_item.xml" value="0.15971223021582734" />
       </map>
     </option>
   </component>

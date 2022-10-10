@@ -17,45 +17,37 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="35dp"
             android:fontFamily="@font/poppins_semibold"
-            android:text="Route"
+            android:text="Check Direction"
+            android:textAllCaps="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/recyclerView"
             app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
 
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/searchView"
-            style="@style/EditTextStyle"
-            android:theme="@style/Theme.DowellMap"
-            app:queryHint="search location"
-            app:searchHintIcon="@drawable/ic_search_icon_light"
-            android:iconifiedByDefault="false"
-            android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="24dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/add_btn"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
-            android:id="@+id/add_btn"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:layout_marginStart="16dp"
-            android:src="@drawable/ic_add"
-            app:layout_constraintBottom_toBottomOf="@+id/searchView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/searchView" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:layout_constraintEnd_toEndOf="@+id/searchView"
-            app:layout_constraintStart_toStartOf="@+id/add_btn"
-            app:layout_constraintTop_toBottomOf="@+id/searchView" />
+            app:layout_constraintEnd_toEndOf="@+id/autoCompleteTextView"
+            app:layout_constraintStart_toStartOf="@+id/autoCompleteTextView"
+            app:layout_constraintTop_toBottomOf="@+id/autoCompleteTextView" />
+
+        <AutoCompleteTextView
+            android:id="@+id/autoCompleteTextView"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="24dp"
+            android:hint="Search location"
+            style="@style/EditTextStyle"
+            android:completionThreshold="2"
+            android:paddingStart="9dp"
+            android:paddingEnd="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
