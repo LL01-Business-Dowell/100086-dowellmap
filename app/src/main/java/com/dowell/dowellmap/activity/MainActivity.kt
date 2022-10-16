@@ -64,7 +64,6 @@ class MainActivity : AppCompatActivity() {
             return
         }else{
             checkConnection()
-
             //location callback to register request
             buildLocationCallback()
             createLocationRequest()
@@ -111,7 +110,7 @@ class MainActivity : AppCompatActivity() {
                 try {
                     // Show the dialog by calling startResolutionForResult(),
                     // and check the result in onActivityResult().
-                    val resolvable = e as ResolvableApiException
+                    val resolvable = e
                     resolvable.startResolutionForResult(
                         this@MainActivity,
                         REQUEST_CHECK_SETTINGS

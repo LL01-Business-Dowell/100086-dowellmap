@@ -1,19 +1,17 @@
 package com.dowell.dowellmap.adapter
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.dowell.dowellmap.data.LocationModel
+import com.dowell.dowellmap.data.model.LocationModel
+import com.dowell.dowellmap.data.model.PlaceDetail
 import com.dowell.dowellmap.databinding.LocationItemBinding
 
 
-class LocationListAdapter() :
-    ListAdapter<LocationModel.Prediction, LocationListAdapter.LocationModelViewHolder>(ItemGroupDiffUtill())  {
+class LocationListAdapter(var removeListener:RemoveListener) : ListAdapter<PlaceDetail, LocationListAdapter.LocationModelViewHolder>(ItemGroupDiffUtill())  {
 
-    var onItemClick: ((LocationModel.Prediction) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationModelViewHolder {
         return LocationModelViewHolder(
@@ -22,33 +20,28 @@ class LocationListAdapter() :
     }
 
 
-
-    override fun getItemCount(): Int {
-        return itemCount
-    }
     override fun onBindViewHolder(holder: LocationModelViewHolder, position: Int) {
-        holder.binding.address.text = getItem(position).description
-    }
-
-    class ItemGroupDiffUtill : DiffUtil.ItemCallback<LocationModel.Prediction>() {
-        override fun areItemsTheSame(oldItem: LocationModel.Prediction, newItem: LocationModel.Prediction): Boolean {
-            return oldItem.description === newItem.description
+        holder.binding.address.text = getItem(position).result?.formatted_address
+        holder.binding.removeIcon.setOnClickListener {
+            removeListener.removeLocation(position,getItem(position))
         }
 
-        override fun areContentsTheSame(oldItem: LocationModel.Prediction, newItem: LocationModel.Prediction): Boolean {
+    }
+
+    interface RemoveListener{
+        fun removeLocation(position:Int,prediction: PlaceDetail)
+    }
+    class ItemGroupDiffUtill : DiffUtil.ItemCallback<PlaceDetail>() {
+        override fun areItemsTheSame(oldItem: PlaceDetail, newItem: PlaceDetail): Boolean {
+            return oldItem.result?.place_id === newItem.result?.place_id
+        }
+
+        override fun areContentsTheSame(oldItem: PlaceDetail, newItem: PlaceDetail): Boolean {
             return oldItem == newItem
         }
 
     }
 
     inner class LocationModelViewHolder(val binding: LocationItemBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-
-        init {
-            itemView.setOnClickListener {
-                onItemClick?.invoke(getItem(adapterPosition))
-            }
-        }
-
-    }
+        RecyclerView.ViewHolder(binding.root)
 }

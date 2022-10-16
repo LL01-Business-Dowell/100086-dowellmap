@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import com.dowell.dowellmap.data.LocationModel
+import com.dowell.dowellmap.data.model.LocationModel
 import com.dowell.dowellmap.databinding.LocationItemBinding
 
 
@@ -28,6 +28,7 @@ class SearchAdapter(context: Context, val predictions: ArrayList<LocationModel.P
         }
 
         binding.address.text = predictions[position]?.description
+        binding.removeIcon.visibility=View.INVISIBLE
         return row
     }
 

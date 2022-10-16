@@ -1,39 +1,97 @@
 package com.dowell.dowellmap.activity
 
 import android.location.Location
+import android.util.Log
 import androidx.lifecycle.*
-import com.dowell.dowellmap.data.LocationModel
-import com.dowell.dowellmap.data.SearchRepository
+import com.dowell.dowellmap.data.*
+import com.dowell.dowellmap.data.model.*
+import com.dowell.dowellmap.data.network.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
-    searchRepository: SearchRepository
+    private val searchRepository: SearchRepository
 ) : ViewModel() {
+
+    private val _query = MutableLiveData<String>()
+    private val _placeId= MutableLiveData<String>()
 
     private val _currentLocationCord = MutableLiveData<Location>()
     val currentLocationCord : LiveData<Location> get() = _currentLocationCord
 
+    private val _selectedPredictions = ArrayList<PlaceDetail>()
+    val selectedPredictions : ArrayList<PlaceDetail> get() = _selectedPredictions
 
-    private val _predictions = MutableLiveData<String>()
-    //val predictions : Flow<LocationModel> get() = _predictions
+    private val _directionResponse = MutableLiveData<Resource<DirectionResponse>>()
+    val directionResponse : LiveData<Resource<DirectionResponse>> get() = _directionResponse
+
+    private val _geocodeResponse = MutableLiveData<Resource<GeocodeModel>>()
+    val geocodeResponse : LiveData<Resource<GeocodeModel>> get() = _geocodeResponse
 
     fun getLocationChange(location: Location){
         _currentLocationCord.value=location
     }
 
-    fun setQuery(query: String) {
-        _predictions.value = query
+    fun setQuery(query: String){
+        _query.value = query
     }
 
-    val results: LiveData<LocationModel>
-            = _predictions.switchMap { query ->
+    fun getPlaceDetail(id: String) {
+        _placeId.value = id
+    }
+
+    fun getfirstLocationData(): Location? {
+        return _currentLocationCord.value
+    }
+
+    val searchResults: LiveData<Resource<LocationModel>>
+            = _query.switchMap { query ->
         liveData {
             emit(
-                searchRepository.getSearchPrediction(query) as LocationModel
+                searchRepository.getSearchPrediction(query)
             )
         }
     }
+
+    val locationDetailResults: LiveData<Resource<PlaceDetail>> = _placeId.switchMap { id ->
+        liveData {
+            emit(
+                searchRepository.getLocationDetail(id)
+            )
+        }
+    }
+
+
+
+    fun setDirectionQuery(origin: String, destination:String, waypoints:String) {
+        viewModelScope.launch {
+            _directionResponse.value = searchRepository.getDirection(origin,destination, waypoints)
+        }
+    }
+
+    fun getGeoCodeInfo(address:String) {
+        viewModelScope.launch {
+            _geocodeResponse.value = searchRepository.getGeocodeDetail(address)
+        }
+    }
+
+
+    fun setSelectedPrediction(predictions: PlaceDetail){
+        if(!_selectedPredictions.contains(predictions)){
+            _selectedPredictions.add(predictions)
+            Log.i("test","yes")
+        }
+        Log.i("ItemSize", _selectedPredictions.size.toString())
+        Log.i("Prediction", predictions.toString())
+    }
+
+    fun removeSelectedPrediction(pos:Int,prediction: PlaceDetail){
+        if(_selectedPredictions.contains(prediction)){
+            _selectedPredictions.removeAt(pos)
+        }
+    }
+
 
 }

@@ -3,14 +3,19 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.148" />
         <entry key="app/src/main/res/drawable/edit_text_bg.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/edit_text_dark_bg.xml" value="0.1015" />
+        <entry key="app/src/main/res/drawable/edit_text_light_bg.xml" value="0.148" />
         <entry key="app/src/main/res/drawable/ic_add.xml" value="0.118" />
+        <entry key="app/src/main/res/drawable/ic_baseline_remove_circle_outline_24.xml" value="0.148" />
+        <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.148" />
+        <entry key="app/src/main/res/drawable/ic_search_icon_light.xml" value="0.148" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_splash_screen.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/fragment_map.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_map.xml" value="0.2" />
         <entry key="app/src/main/res/layout/fragment_search.xml" value="0.16560509554140126" />
-        <entry key="app/src/main/res/layout/location_item.xml" value="0.15971223021582734" />
+        <entry key="app/src/main/res/layout/location_item.xml" value="0.5" />
       </map>
     </option>
   </component>
