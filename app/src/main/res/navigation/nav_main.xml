@@ -27,7 +27,6 @@
         android:label="DowellMap"
         tools:layout="@layout/fragment_map" >
 
-
         <argument
             android:name="placeModel"
             app:argType="com.dowell.dowellmap.data.model.PlaceDetail[]"

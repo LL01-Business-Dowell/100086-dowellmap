@@ -78,6 +78,7 @@ class SearchFragment : Fragment(), LocationListAdapter.RemoveListener {
                         when (data) {
                             is Resource.Success -> {
                                 if (data.value.predictions?.isNotEmpty() == true) {
+                                    Log.i("DataSize", data.value.predictions?.size.toString())
                                     data.value.predictions?.let { displayResult(it as ArrayList<LocationModel.Prediction?>) }
                                 }
                             }

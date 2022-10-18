@@ -168,7 +168,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                             val cameraPosition =
                                 CameraPosition.Builder()
-                                    .target(mMap.cameraPosition.target)
+                                    .target(stringToCoordinate(origin))
                                     .tilt(60f)
                                     .zoom(8f)
                                     .bearing(0f)
