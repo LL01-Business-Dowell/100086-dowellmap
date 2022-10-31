@@ -1,9 +1,6 @@
 package com.dowell.dowellmap.data.network
 
-import com.dowell.dowellmap.data.model.DirectionResponse
-import com.dowell.dowellmap.data.model.GeocodeModel
-import com.dowell.dowellmap.data.model.LocationModel
-import com.dowell.dowellmap.data.model.PlaceDetail
+import com.dowell.dowellmap.data.model.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -18,6 +15,14 @@ interface ApiService {
         @Query("input") input : String,
         @Query("key") key : String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
     ) : LocationModel
+
+ @GET("place/textsearch/json")
+    suspend fun textSearch(
+        @Query("query") query : String,
+        @Query("location") location : String,
+        @Query("radius") radius : String,
+        @Query("key") key : String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
+    ) : InputSearchModel
 
     @GET("place/details/json")
     suspend fun getLocationDetail(

@@ -27,6 +27,9 @@ class MainActivityViewModel @Inject constructor(
     private val _directionResponse = MutableLiveData<Resource<DirectionResponse>>()
     val directionResponse : LiveData<Resource<DirectionResponse>> get() = _directionResponse
 
+    private val _textResponse = MutableLiveData<Resource<InputSearchModel>>()
+    val textResponse : LiveData<Resource<InputSearchModel>> get() = _textResponse
+
     private val _geocodeResponse = MutableLiveData<Resource<GeocodeModel>>()
     val geocodeResponse : LiveData<Resource<GeocodeModel>> get() = _geocodeResponse
 
@@ -77,6 +80,12 @@ class MainActivityViewModel @Inject constructor(
         }
     }
 
+    fun setInputSearch(query: String, location: String, radius: String) {
+        viewModelScope.launch {
+            _textResponse.value = searchRepository.getTextSearch(query, location, radius)
+//            Log.d("Ayomidee::::::", _textResponse.value.toString())
+        }
+    }
 
     fun setSelectedPrediction(predictions: PlaceDetail){
         if(!_selectedPredictions.contains(predictions)){
@@ -92,6 +101,5 @@ class MainActivityViewModel @Inject constructor(
             _selectedPredictions.removeAt(pos)
         }
     }
-
 
 }

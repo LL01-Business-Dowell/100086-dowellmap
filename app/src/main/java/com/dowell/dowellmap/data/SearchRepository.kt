@@ -2,8 +2,7 @@ package com.dowell.dowellmap.data
 
 import com.dowell.dowellmap.data.network.ApiService
 import com.dowell.dowellmap.data.network.SafeApiCall
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+
 
 class SearchRepository: SafeApiCall {
 
@@ -26,6 +25,14 @@ class SearchRepository: SafeApiCall {
     suspend fun getGeocodeDetail(address:String) = safeApiCall {
         ApiService.getInstance().getGeocodeDetail(
             address = address
+        )
+    }
+
+    suspend fun getTextSearch(query: String, location: String, radius: String) = safeApiCall {
+        ApiService.getInstance().textSearch(
+            radius = radius,
+            location = location,
+            query = query,
         )
     }
 

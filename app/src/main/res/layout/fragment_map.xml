@@ -16,4 +16,59 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/white"
+        android:padding="10dp">
+
+        <EditText
+            android:id="@+id/edt_radius"
+            style="@style/EditTextStyle"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_margin="15dp"
+            android:hint="Radius"
+            android:textColor="@color/black"
+            android:inputType="number"
+            android:paddingStart="9dp"
+            android:paddingEnd="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/search_btn"
+            app:layout_constraintEnd_toStartOf="@+id/edt_text"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
+
+
+        <EditText
+            android:id="@+id/edt_text"
+            style="@style/EditTextStyle"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_margin="15dp"
+            android:hint="Text"
+            android:textColor="@color/black"
+            android:paddingStart="9dp"
+            android:paddingEnd="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/edt_radius"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/edt_radius"
+            app:layout_constraintTop_toTopOf="@+id/edt_radius" />
+
+        <Button
+            android:id="@+id/search_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:fontFamily="@font/poppins_semibold"
+            android:text="Search Location"
+            android:textAllCaps="false"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+
+            />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </FrameLayout>
