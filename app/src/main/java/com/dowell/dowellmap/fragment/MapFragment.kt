@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import com.dowell.dowellmap.R
@@ -55,8 +56,26 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             childFragmentManager.findFragmentById(R.id.mapView) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        binding.searchBtn.setOnClickListener {
+            viewModel.currentLocationCord.observe(
+                viewLifecycleOwner, Observer { currentLoccation ->
+
+                    viewModel.setInputSearch(
+                        query = binding.edtText.text.toString(),
+                        location = coordinateToString(currentLoccation.latitude, currentLoccation.longitude),
+                        radius = binding.edtRadius.text.toString())
+                }
+            )
+
+            Log.d("AY:::", binding.edtText.text.toString())
+        }
+
         getRoute()
         return binding.root
+    }
+
+    fun searchButtonFunction() {
+
     }
 
     fun getRoute() {
@@ -189,7 +208,64 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
             }
         }
+
+
+        viewModel.textResponse.observe(this) {
+            if (view != null) {
+                lifecycleScope.launch {
+                    when (it) {
+                        is Resource.Success -> {
+                            //set origin marker and camera property
+                            mMap.addMarker(
+                                MarkerOptions()
+                                    .position(stringToCoordinate(origin))
+                                    .title("Start Location")
+
+                            )?.showInfoWindow()
+
+                            //set waypoint(s) maker including the destination
+                            it.value.results?.forEach {
+                                it.geometry?.location?.getLatLng()?.let { latlng ->
+
+                                    MarkerOptions()
+                                        .position(latlng)
+                                        .title(it.formatted_address)
+
+
+                                }?.let { mapOption ->
+                                    mMap.addMarker(
+                                        mapOption
+                                    )?.showInfoWindow()
+                                }
+
+                            }
+
+                            val cameraPosition =
+                                CameraPosition.Builder()
+                                    .target(stringToCoordinate(origin))
+                                    .tilt(60f)
+                                    .zoom(8f)
+                                    .bearing(0f)
+                                    .build()
+
+                            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+
+                        }
+                        is Resource.Failure -> {
+                            toast("Routing Failed", requireContext())
+                        }
+                        is Resource.Loading -> {
+                            toast("Routing...", requireContext())
+                        }
+                    }
+
+                }
+
+            }
+        }
     }
+
+
 
 
     override fun onDestroyView() {

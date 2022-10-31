@@ -19,8 +19,10 @@ import androidx.navigation.findNavController
 import com.dowell.dowellmap.activity.MainActivityViewModel
 import com.dowell.dowellmap.adapter.LocationListAdapter
 import com.dowell.dowellmap.adapter.SearchAdapter
+import com.dowell.dowellmap.data.SearchRepository
 import com.dowell.dowellmap.data.model.LocationModel
 import com.dowell.dowellmap.data.model.PlaceDetail
+import com.dowell.dowellmap.data.network.ApiService
 import com.dowell.dowellmap.data.network.Resource
 import com.dowell.dowellmap.databinding.FragmentSearchBinding
 import com.dowell.dowellmap.toast
@@ -37,6 +39,7 @@ class SearchFragment : Fragment(), LocationListAdapter.RemoveListener {
     lateinit var selectedAdapter: LocationListAdapter
     lateinit var searchAdapter: SearchAdapter
     lateinit var selectedPlace: LocationModel.Prediction
+    lateinit var searchRepository: SearchRepository
 
 
     override fun onCreateView(
@@ -94,6 +97,8 @@ class SearchFragment : Fragment(), LocationListAdapter.RemoveListener {
         }
 
 
+
+
         return binding.root
     }
 
@@ -145,8 +150,6 @@ class SearchFragment : Fragment(), LocationListAdapter.RemoveListener {
                     }
                 }
             }
-
-
         }
 
         binding.routeBtn.setOnClickListener {
@@ -155,7 +158,11 @@ class SearchFragment : Fragment(), LocationListAdapter.RemoveListener {
 
         }
 
+
+
     }
+
+
 
     override fun removeLocation(position: Int, prediction: PlaceDetail) {
         Log.i("ItemPosition", position.toString())

@@ -15,11 +15,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="35dp"
             android:fontFamily="@font/poppins_semibold"
             android:text="Check Direction"
             android:textAllCaps="false"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/recyclerView"
             app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
 
@@ -63,6 +61,52 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/autoCompleteTextView" />
 
+<!--        <EditText-->
+<!--            android:id="@+id/edt_radius"-->
+<!--            style="@style/EditTextStyle"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="46dp"-->
+<!--            android:layout_margin="15dp"-->
+<!--            android:inputType="number"-->
+<!--            android:hint="radius"-->
+<!--            android:paddingStart="9dp"-->
+<!--            android:paddingEnd="8dp"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintEnd_toStartOf="@+id/search_btn"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/route_btn" />-->
+
+
+<!--        <EditText-->
+<!--            android:id="@+id/edt_text"-->
+<!--            style="@style/EditTextStyle"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="46dp"-->
+<!--            android:layout_margin="15dp"-->
+<!--            android:hint="Text"-->
+<!--            android:paddingStart="9dp"-->
+<!--            android:paddingEnd="8dp"-->
+<!--            app:layout_constraintBottom_toBottomOf="@+id/edt_radius"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toEndOf="@+id/edt_radius"-->
+<!--            app:layout_constraintTop_toTopOf="@+id/edt_radius" />-->
+
+
+<!--        <Button-->
+<!--            android:id="@+id/search_btn"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:fontFamily="@font/poppins_semibold"-->
+<!--            android:text="Search Location"-->
+<!--            android:layout_margin="10dp"-->
+<!--            android:textAllCaps="false"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="@+id/route_btn"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/route_btn"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/edt_radius" />-->
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 </androidx.core.widget.NestedScrollView>
