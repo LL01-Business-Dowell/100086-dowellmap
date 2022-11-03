@@ -1,18 +1,21 @@
 package com.dowell.dowellmap.fragment
 
 import android.graphics.Color
+import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
+import android.view.InputQueue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import com.dowell.dowellmap.R
 import com.dowell.dowellmap.activity.MainActivityViewModel
+import com.dowell.dowellmap.data.model.InputSearchModel
 import com.dowell.dowellmap.data.network.Resource
 import com.dowell.dowellmap.databinding.FragmentMapBinding
 import com.dowell.dowellmap.toast
@@ -21,13 +24,14 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PolylineOptions
-import com.google.maps.android.PolyUtil
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 @AndroidEntryPoint
@@ -40,6 +44,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var mapFragment: SupportMapFragment
     private var waypoint: String = ""
     private lateinit var origin: String
+    private lateinit var query: String
+    private lateinit var originLocation: Location
+    private var radius: Int = 0
     private var destination: String = ""
 
     val mapArgs: MapFragmentArgs by navArgs()
@@ -56,27 +63,33 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             childFragmentManager.findFragmentById(R.id.mapView) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        binding.searchBtn.setOnClickListener {
-            viewModel.currentLocationCord.observe(
-                viewLifecycleOwner, Observer { currentLoccation ->
-
-                    viewModel.setInputSearch(
-                        query = binding.edtText.text.toString(),
-                        location = coordinateToString(currentLoccation.latitude, currentLoccation.longitude),
-                        radius = binding.edtRadius.text.toString())
-                }
-            )
-
-            Log.d("AY:::", binding.edtText.text.toString())
+        viewModel.currentLocationCord.observe(
+            viewLifecycleOwner
+        ) { currentLoccation ->
+            origin = coordinateToString(currentLoccation.latitude, currentLoccation.longitude)
+            originLocation = currentLoccation
         }
 
-        getRoute()
+        binding.searchBtn.setOnClickListener {
+            if (origin.isNotEmpty()) {
+                mMap.clear()
+
+                viewModel.setInputSearch(
+                    query = binding.edtText.text.toString(),
+                    location = origin,
+                    radius = binding.edtRadius.text.toString()
+                )
+
+                radius = binding.edtRadius.text.toString().toInt()
+                query = binding.edtText.text.toString()
+            }
+
+        }
+
+        //getRoute()
         return binding.root
     }
 
-    fun searchButtonFunction() {
-
-    }
 
     fun getRoute() {
 
@@ -89,20 +102,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             ?.joinToString("|").toString()
 
         Log.i("Waypoint", waypoint)
-
-        /*viewModel.currentLocationCord.observe(requireActivity()) {
-            if (view != null) {
-                lifecycleScope.launch {
-                    if (it != null) {
-                        origin = coordinateToString(it.latitude, it.longitude)
-                        //viewModel.currentLocationCord.removeObserver()
-                        Log.i("Current location", origin)
-                    } else {
-                        toast("Location Detection failed", requireContext())
-                    }
-                }
-            }
-        }*/
 
         origin = viewModel.getfirstLocationData()?.latitude?.let {
             viewModel.getfirstLocationData()?.longitude?.let { it1 ->
@@ -137,77 +136,77 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mMap = map
         mMap.isMyLocationEnabled = true
 
-        viewModel.directionResponse.observe(this) {
-            if (view != null) {
-                lifecycleScope.launch {
-                    when (it) {
-                        is Resource.Success -> {
-                            //Draw routing path
-                            val path: MutableList<List<LatLng>> = ArrayList()
-                            it.value.routes?.get(0)?.legs?.forEach { it ->
-                                val step = it.steps
-                                for (i in 0 until step?.size!!) {
-                                    val points = step[i].polyline?.points
-                                    path.add(PolyUtil.decode(points))
-                                }
+        /* viewModel.directionResponse.observe(this) {
+             if (view != null) {
+                 lifecycleScope.launch {
+                     when (it) {
+                         is Resource.Success -> {
+                             //Draw routing path
+                             val path: MutableList<List<LatLng>> = ArrayList()
+                             it.value.routes?.get(0)?.legs?.forEach { it ->
+                                 val step = it.steps
+                                 for (i in 0 until step?.size!!) {
+                                     val points = step[i].polyline?.points
+                                     path.add(PolyUtil.decode(points))
+                                 }
 
-                                for (i in 0 until path.size) {
-                                    mMap.addPolyline(
-                                        PolylineOptions().addAll(path[i])
-                                            .color(Color.parseColor("#005734"))
-                                    )
-                                }
-                            }
-
-
-                            //set origin marker and camera property
-                            mMap.addMarker(
-                                MarkerOptions()
-                                    .position(stringToCoordinate(origin))
-                                    .title("Start Location")
-
-                            )?.showInfoWindow()
-
-                            //set waypoint(s) maker including the destination
-                            mapArgs.placeModel?.forEach {
-                                it.result?.geometry?.location?.getLatLng()?.let { latlng ->
-
-                                    MarkerOptions()
-                                        .position(latlng)
-                                        .title(it?.result?.formatted_address)
+                                 for (i in 0 until path.size) {
+                                     mMap.addPolyline(
+                                         PolylineOptions().addAll(path[i])
+                                             .color(Color.parseColor("#005734"))
+                                     )
+                                 }
+                             }
 
 
-                                }?.let { mapOption ->
-                                    mMap.addMarker(
-                                        mapOption
-                                    )?.showInfoWindow()
-                                }
+                             //set origin marker and camera property
+                             mMap.addMarker(
+                                 MarkerOptions()
+                                     .position(stringToCoordinate(origin))
+                                     .title("Start Location")
 
-                            }
+                             )?.showInfoWindow()
 
-                            val cameraPosition =
-                                CameraPosition.Builder()
-                                    .target(stringToCoordinate(origin))
-                                    .tilt(60f)
-                                    .zoom(8f)
-                                    .bearing(0f)
-                                    .build()
+                             //set waypoint(s) maker including the destination
+                             mapArgs.placeModel?.forEach {
+                                 it.result?.geometry?.location?.getLatLng()?.let { latlng ->
 
-                            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+                                     MarkerOptions()
+                                         .position(latlng)
+                                         .title(it?.result?.formatted_address)
 
-                        }
-                        is Resource.Failure -> {
-                            toast("Routing Failed", requireContext())
-                        }
-                        is Resource.Loading -> {
-                            toast("Routing...", requireContext())
-                        }
-                    }
 
-                }
+                                 }?.let { mapOption ->
+                                     mMap.addMarker(
+                                         mapOption
+                                     )?.showInfoWindow()
+                                 }
 
-            }
-        }
+                             }
+
+                             val cameraPosition =
+                                 CameraPosition.Builder()
+                                     .target(stringToCoordinate(origin))
+                                     .tilt(60f)
+                                     .zoom(8f)
+                                     .bearing(0f)
+                                     .build()
+
+                             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+
+                         }
+                         is Resource.Failure -> {
+                             toast("Routing Failed", requireContext())
+                         }
+                         is Resource.Loading -> {
+                             toast("Routing...", requireContext())
+                         }
+                     }
+
+                 }
+
+             }
+         }*/
 
 
         viewModel.textResponse.observe(this) {
@@ -215,46 +214,66 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 lifecycleScope.launch {
                     when (it) {
                         is Resource.Success -> {
-                            //set origin marker and camera property
-                            mMap.addMarker(
-                                MarkerOptions()
-                                    .position(stringToCoordinate(origin))
-                                    .title("Start Location")
 
-                            )?.showInfoWindow()
+                            //draw circumference
+                            val center = stringToCoordinate(origin)
 
-                            //set waypoint(s) maker including the destination
-                            it.value.results?.forEach {
-                                it.geometry?.location?.getLatLng()?.let { latlng ->
+                            val circleOptions = CircleOptions()
+                            circleOptions.center(center)
+                            circleOptions.radius(radius.toDouble())
+                            circleOptions.fillColor(Color.parseColor("#6DFFFFFF"))
+                            circleOptions.strokeColor(Color.parseColor("#005734"))
+                            circleOptions.strokeWidth(2f)
 
-                                    MarkerOptions()
-                                        .position(latlng)
-                                        .title(it.formatted_address)
+                            mMap.addCircle(circleOptions)
 
+                            val selectedLocation=computeDistance(
+                                originLocation,
+                                it.value
+                            ).results?.filter { it.radius!! <= radius }.also { results ->
+                                if (results != null) {
+                                    if(results.isEmpty()) {
+                                        toast("There is no $query within $radius meters",
+                                            requireContext())
+                                    }else{
+                                        results.forEach {
+                                            it.geometry?.location?.getLatLng()?.let { latlng ->
 
-                                }?.let { mapOption ->
-                                    mMap.addMarker(
-                                        mapOption
-                                    )?.showInfoWindow()
+                                                MarkerOptions()
+                                                    .position(latlng)
+                                                    .title(it.name)
+
+                                            }?.let { mapOption ->
+                                                mMap.addMarker(
+                                                    mapOption
+                                                )?.showInfoWindow()
+                                            }
+                                        }
+
+                                    }
                                 }
-
                             }
+
 
                             val cameraPosition =
                                 CameraPosition.Builder()
                                     .target(stringToCoordinate(origin))
                                     .tilt(60f)
-                                    .zoom(8f)
+                                    .zoom(12f)
                                     .bearing(0f)
                                     .build()
 
                             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 
+                            binding.progressBar.visibility = View.INVISIBLE
+
                         }
                         is Resource.Failure -> {
-                            toast("Routing Failed", requireContext())
+                            binding.progressBar.visibility = View.INVISIBLE
+                            toast("Search Failed", requireContext())
                         }
                         is Resource.Loading -> {
+                            binding.progressBar.visibility = View.VISIBLE
                             toast("Routing...", requireContext())
                         }
                     }
@@ -265,8 +284,21 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    private fun computeDistance(
+        currentLocationCord: Location,
+        inputSearchModel: InputSearchModel
+    ): InputSearchModel {
 
+        inputSearchModel.results?.forEach { data ->
+            val point2 = Location(LocationManager.NETWORK_PROVIDER)
+            point2.latitude = data.geometry?.location?.lat!!
+            point2.longitude = data.geometry?.location?.lng!!
+            data.radius = currentLocationCord.distanceTo(point2).toInt()
 
+        }
+
+        return inputSearchModel
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -18,10 +18,10 @@ interface ApiService {
 
  @GET("place/textsearch/json")
     suspend fun textSearch(
-        @Query("query") query : String,
-        @Query("location") location : String,
-        @Query("radius") radius : String,
-        @Query("key") key : String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
+     @Query("query") query: String,
+     @Query("location") location: String,
+     @Query("radius") radius: Int,
+     @Query("key") key: String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
     ) : InputSearchModel
 
     @GET("place/details/json")

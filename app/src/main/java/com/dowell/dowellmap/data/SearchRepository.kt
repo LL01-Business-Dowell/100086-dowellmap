@@ -28,7 +28,7 @@ class SearchRepository: SafeApiCall {
         )
     }
 
-    suspend fun getTextSearch(query: String, location: String, radius: String) = safeApiCall {
+    suspend fun getTextSearch(query: String, location: String, radius: Int) = safeApiCall {
         ApiService.getInstance().textSearch(
             radius = radius,
             location = location,

@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.Observer
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -155,6 +156,10 @@ class SearchFragment : Fragment(), LocationListAdapter.RemoveListener {
         binding.routeBtn.setOnClickListener {
             val action = SearchFragmentDirections.actionSearchFragmentToMapFragment(viewModel.selectedPredictions.toTypedArray())
             view?.findNavController()?.navigate(action)
+
+            viewModel.currentLocationCord.observe(this, Observer {
+                it.latitude
+            })
 
         }
 

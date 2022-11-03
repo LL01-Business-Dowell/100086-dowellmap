@@ -14,6 +14,7 @@ data class InputSearchModel(
     data class Results(
         var business_status: String?,
         var formatted_address: String?,
+        var radius: Int?= 0 ,
         var geometry: Geometry?,
         var icon: String?,
         var icon_background_color: String?,

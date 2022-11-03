@@ -82,10 +82,12 @@ class MainActivityViewModel @Inject constructor(
 
     fun setInputSearch(query: String, location: String, radius: String) {
         viewModelScope.launch {
-            _textResponse.value = searchRepository.getTextSearch(query, location, radius)
-//            Log.d("Ayomidee::::::", _textResponse.value.toString())
+            _textResponse.value = Resource.Loading
+            _textResponse.value = searchRepository.getTextSearch(query,
+                location, radius.toInt())
         }
     }
+
 
     fun setSelectedPrediction(predictions: PlaceDetail){
         if(!_selectedPredictions.contains(predictions)){

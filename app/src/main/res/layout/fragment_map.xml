@@ -6,7 +6,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragment.MapFragment">
 
-    <fragment
+
+
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/mapView"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
@@ -16,59 +18,108 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/white"
-        android:padding="10dp">
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="invisible"
+        android:layout_gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        />
 
-        <EditText
-            android:id="@+id/edt_radius"
-            style="@style/EditTextStyle"
-            android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_margin="15dp"
-            android:hint="Radius"
-            android:textColor="@color/black"
-            android:inputType="number"
-            android:paddingStart="9dp"
-            android:paddingEnd="8dp"
-            app:layout_constraintBottom_toTopOf="@+id/search_btn"
-            app:layout_constraintEnd_toStartOf="@+id/edt_text"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="bottom">
+
+            <ImageView
+                android:id="@+id/imageView3"
+                android:layout_width="70dp"
+                android:layout_height="25dp"
+                android:layout_marginBottom="-4dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/google_logo"
+                app:layout_constraintBottom_toTopOf="@+id/cardView"
+                app:layout_constraintStart_toStartOf="@+id/cardView" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="6dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
 
-        <EditText
-            android:id="@+id/edt_text"
-            style="@style/EditTextStyle"
-            android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_margin="15dp"
-            android:hint="Text"
-            android:textColor="@color/black"
-            android:paddingStart="9dp"
-            android:paddingEnd="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/edt_radius"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/edt_radius"
-            app:layout_constraintTop_toTopOf="@+id/edt_radius" />
+                    <EditText
+                        android:id="@+id/edt_radius"
+                        style="@style/EditTextStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="24dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/radius"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:paddingStart="9dp"
+                        android:paddingEnd="8dp"
+                        android:textColor="@color/black"
+                        android:textColorHint="#757575"
+                        app:layout_constraintBottom_toTopOf="@+id/search_btn"
+                        app:layout_constraintEnd_toStartOf="@+id/edt_text"
+                        app:layout_constraintHorizontal_bias="0.5"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
-            android:id="@+id/search_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:fontFamily="@font/poppins_semibold"
-            android:text="Search Location"
-            android:textAllCaps="false"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
 
-            />
+                    <EditText
+                        android:id="@+id/edt_text"
+                        style="@style/EditTextStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="16dp"
+                        android:hint="@string/search_text"
+                        android:importantForAutofill="no"
+                        android:inputType="text"
+                        android:paddingStart="9dp"
+                        android:paddingEnd="8dp"
+                        android:textColor="@color/black"
+                        android:textColorHint="#757575"
+                        app:layout_constraintBottom_toBottomOf="@+id/edt_radius"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.5"
+                        app:layout_constraintStart_toEndOf="@+id/edt_radius"
+                        app:layout_constraintTop_toTopOf="@+id/edt_radius" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                    <Button
+                        android:id="@+id/search_btn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:text="@string/search_location"
+                        android:textAllCaps="false"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="@+id/edt_text" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 </FrameLayout>
