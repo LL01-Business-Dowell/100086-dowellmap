@@ -3,10 +3,10 @@ package com.dowell.dowellmap.data.network
 import com.dowell.dowellmap.data.model.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
+import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
 interface ApiService {
@@ -45,6 +45,9 @@ interface ApiService {
         @Query("key") key : String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
     ) : GeocodeModel
 
+    @Headers("Content-Type: application/json")
+    @POST("api/linkbased/")
+    fun loginUser(@Body login: Login): Call<Login>
 
     companion object {
         var apiService: ApiService? = null
