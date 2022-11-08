@@ -8,11 +8,14 @@ import com.dowell.dowellmap.data.model.*
 import com.dowell.dowellmap.data.network.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import okhttp3.ResponseBody
+import retrofit2.Call
 import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
-    private val searchRepository: SearchRepository
+    private val searchRepository: SearchRepository,
+    private val userDatastore: UserDatastore
 ) : ViewModel() {
 
     private val _query = MutableLiveData<String>()
@@ -32,6 +35,9 @@ class MainActivityViewModel @Inject constructor(
 
     private val _geocodeResponse = MutableLiveData<Resource<GeocodeModel>>()
     val geocodeResponse : LiveData<Resource<GeocodeModel>> get() = _geocodeResponse
+
+    private val _qrId = MutableLiveData<Resource<Call<UserLogResponse>>>()
+    val qrId : LiveData<Resource<Call<UserLogResponse>>> get() = _qrId
 
     fun getLocationChange(location: Location){
         _currentLocationCord.value=location
@@ -102,6 +108,15 @@ class MainActivityViewModel @Inject constructor(
         if(_selectedPredictions.contains(prediction)){
             _selectedPredictions.removeAt(pos)
         }
+    }
+
+    fun logUser(logPost: LogPost){
+        viewModelScope.launch {
+            _qrId.value=searchRepository.makeLog(logPost)
+        }
+    }
+    suspend fun setQrId(qrId:String){
+        userDatastore.setQrId(qrId)
     }
 
 }

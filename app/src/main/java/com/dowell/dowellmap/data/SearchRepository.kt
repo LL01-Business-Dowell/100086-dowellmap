@@ -1,21 +1,24 @@
 package com.dowell.dowellmap.data
 
+import com.dowell.dowellmap.data.model.LogPost
 import com.dowell.dowellmap.data.network.ApiService
+import com.dowell.dowellmap.data.network.ApiService.Companion.getInstance
+import com.dowell.dowellmap.data.network.ApiService.Companion.getLogInstance
 import com.dowell.dowellmap.data.network.SafeApiCall
 
 
 class SearchRepository: SafeApiCall {
 
     suspend fun getSearchPrediction(input:String) = safeApiCall{
-        ApiService.getInstance().getPredictions(input)
+        getInstance().getPredictions(input)
     }
 
     suspend fun getLocationDetail(place_id:String) = safeApiCall {
-        ApiService.getInstance().getLocationDetail(place_id = place_id)
+        getInstance().getLocationDetail(place_id = place_id)
     }
 
     suspend fun getDirection(origin: String?, destination:String, waypoints:String) = safeApiCall {
-        ApiService.getInstance().getRouteDirections(
+        getInstance().getRouteDirections(
             origin = origin,
             destination =destination,
             waypoints = waypoints
@@ -23,17 +26,24 @@ class SearchRepository: SafeApiCall {
     }
 
     suspend fun getGeocodeDetail(address:String) = safeApiCall {
-        ApiService.getInstance().getGeocodeDetail(
+        getInstance().getGeocodeDetail(
             address = address
         )
     }
 
     suspend fun getTextSearch(query: String, location: String, radius: Int) = safeApiCall {
-        ApiService.getInstance().textSearch(
+        getInstance().textSearch(
             radius = radius,
             location = location,
             query = query,
         )
     }
+
+    suspend fun makeLog(logPost: LogPost) = safeApiCall {
+        getLogInstance().logUser(
+            logPost
+        )
+    }
+
 
 }

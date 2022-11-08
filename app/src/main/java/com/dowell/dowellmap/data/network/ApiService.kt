@@ -2,10 +2,15 @@ package com.dowell.dowellmap.data.network
 
 import com.dowell.dowellmap.data.model.*
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit.RxJavaCallAdapterFactory
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
@@ -46,8 +51,12 @@ interface ApiService {
     ) : GeocodeModel
 
 
+    @POST("api/linkbased/")
+    fun logUser(@Body logpost: LogPost): Call<UserLogResponse>
+
     companion object {
         var apiService: ApiService? = null
+        var apiServiceLog: ApiService? = null
         fun getInstance() : ApiService {
             if (apiService == null) {
                 apiService = Retrofit.Builder()
@@ -58,6 +67,18 @@ interface ApiService {
                     .create(ApiService::class.java)
             }
             return apiService!!
+        }
+
+        fun getLogInstance() : ApiService {
+            if (apiServiceLog == null) {
+                apiServiceLog = Retrofit.Builder()
+                    .baseUrl("https://100014.pythonanywhere.com/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(getRetrofitClient())
+                    .build()
+                    .create(ApiService::class.java)
+            }
+            return apiServiceLog!!
         }
 
         private fun getRetrofitClient(): OkHttpClient {

@@ -43,7 +43,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var mapFragment: SupportMapFragment
     private var waypoint: String = ""
-    private lateinit var origin: String
+    private var origin: String = ""
     private lateinit var query: String
     private lateinit var originLocation: Location
     private var radius: Int = 0
@@ -73,15 +73,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         binding.searchBtn.setOnClickListener {
             if (origin.isNotEmpty()) {
                 mMap.clear()
-
                 viewModel.setInputSearch(
                     query = binding.edtText.text.toString(),
                     location = origin,
                     radius = binding.edtRadius.text.toString()
                 )
-
                 radius = binding.edtRadius.text.toString().toInt()
                 query = binding.edtText.text.toString()
+            }else{
+                toast("Please enable location", requireContext())
             }
 
         }
@@ -207,7 +207,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
              }
          }*/
-
 
         viewModel.textResponse.observe(this) {
             if (view != null) {

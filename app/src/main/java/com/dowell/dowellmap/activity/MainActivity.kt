@@ -1,29 +1,40 @@
 package com.dowell.dowellmap.activity
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupWithNavController
+import com.dowell.dowellmap.*
+import com.dowell.dowellmap.LogDeviceInfo.getCityName
+import com.dowell.dowellmap.LogDeviceInfo.ipAddress
 import com.dowell.dowellmap.R
+import com.dowell.dowellmap.data.UserDatastore
+import com.dowell.dowellmap.data.model.LogPost
+import com.dowell.dowellmap.data.network.Resource
 import com.dowell.dowellmap.databinding.ActivityMainBinding
-import com.dowell.dowellmap.isOnline
-import com.dowell.dowellmap.visible
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -40,6 +51,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var locationRequest: LocationRequest
     private var currentLocation: Location? = null
     private lateinit var locationCallback: LocationCallback
+
+    @Inject
+    lateinit var userDatastore: UserDatastore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,32 +73,89 @@ class MainActivity : AppCompatActivity() {
         //initialized Location service client
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-
-        if(!locationPermissionGranted){
+        if (!locationPermissionGranted) {
             return
-        }else{
+        } else {
             checkConnection()
             //location callback to register request
             buildLocationCallback()
             createLocationRequest()
             settingsCheck()
         }
+
+
+        val mobileIp = ipAddress()
+        val currentDate = DateFormat.getDateInstance().format(Date())
+
+        val city = currentLocation?.latitude?.let { coordinateToString(it,
+            currentLocation?.latitude!!
+        ) }
+
+
+        //asynchronous user log sent
+        viewModel.logUser(
+            LogPost(
+                userName = "user-" + LogDeviceInfo.generateUserName(10),
+                os = "android",
+                device = "mobile",
+                browser = "dowell map mobile",
+                location = city,
+                time = currentDate,
+                connection = networkState(this),
+                ip = mobileIp
+            )
+        )
+
+
+
+        //temp store qrId in datastore
+        viewModel.qrId.observe(this) {
+            lifecycleScope.launch {
+                when (it) {
+                    is Resource.Success -> {
+                        Log.i("LogResponse", it.value.toString())
+                       // it.value.qrid?.let { it1 -> viewModel.setQrId(qrId = it1) }
+                        toast("Successfully log user",this@MainActivity)
+                    }
+
+                    is Resource.Failure -> {
+                        toast("Background data request failed", this@MainActivity)
+                    }
+
+                    else -> {
+                        toast("Something went wrong!", this@MainActivity)
+                    }
+                }
+            }
+
+        }
+
+
     }
 
-    fun checkConnection(){
-        if(!isOnline(this)){
-            visible(binding.errorMsg,true)
+    fun coordinateToString(lat: Double, lngDouble: Double): String {
+        return lat.toString().plus(",").plus(lngDouble)
+    }
+
+    fun checkConnection() {
+        if (!isOnline(this)) {
+            visible(binding.errorMsg, true)
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun createLocationRequest() {
         locationRequest = LocationRequest.create()
         locationRequest.interval = 10000
         locationRequest.fastestInterval = 5000
         locationRequest.priority = Priority.PRIORITY_HIGH_ACCURACY
 
-        if(currentLocation==null){
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
+        if (currentLocation == null) {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.myLooper()
+            )
         }
     }
 
@@ -220,7 +291,7 @@ class MainActivity : AppCompatActivity() {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
 
-        if(locationPermissionGranted){
+        if (locationPermissionGranted) {
             getCurrentLocation()
         }
     }

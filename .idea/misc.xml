@@ -13,8 +13,9 @@
         <entry key="app/src/main/res/drawable/ic_search_icon_light.xml" value="0.148" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_splash_screen.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/fragment_map.xml" value="0.2" />
-        <entry key="app/src/main/res/layout/fragment_search.xml" value="0.16560509554140126" />
+        <entry key="app/src/main/res/layout/fragment_map.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_search.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/input_search_layout.xml" value="0.19927536231884058" />
         <entry key="app/src/main/res/layout/location_item.xml" value="0.5" />
       </map>
     </option>
