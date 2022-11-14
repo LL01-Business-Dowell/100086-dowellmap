@@ -258,7 +258,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                 CameraPosition.Builder()
                                     .target(stringToCoordinate(origin))
                                     .tilt(60f)
-                                    .zoom(12f)
+                                    .zoom(17f)
                                     .bearing(0f)
                                     .build()
 

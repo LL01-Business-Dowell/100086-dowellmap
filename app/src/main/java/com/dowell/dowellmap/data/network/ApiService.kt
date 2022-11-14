@@ -54,6 +54,12 @@ interface ApiService {
     @POST("api/linkbased/")
     fun logUser(@Body logpost: LogPost): Call<UserLogResponse>
 
+    @POST("event_creation/")
+    fun eventCreation(@Body eventCreationPost: EventCreationPost): Call<EventCreationResponse>
+
+    @POST("")
+    fun apiSearch(@Body apiSearchPost: APISearchPost): Call<ApiSearchResponse>
+
     companion object {
         var apiService: ApiService? = null
         var apiServiceLog: ApiService? = null
@@ -73,6 +79,30 @@ interface ApiService {
             if (apiServiceLog == null) {
                 apiServiceLog = Retrofit.Builder()
                     .baseUrl("https://100014.pythonanywhere.com/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(getRetrofitClient())
+                    .build()
+                    .create(ApiService::class.java)
+            }
+            return apiServiceLog!!
+        }
+
+        fun getEventCreationInstance() : ApiService {
+            if (apiServiceLog == null) {
+                apiServiceLog = Retrofit.Builder()
+                    .baseUrl("https://100003.pythonanywhere.com/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .client(getRetrofitClient())
+                    .build()
+                    .create(ApiService::class.java)
+            }
+            return apiServiceLog!!
+        }
+
+        fun getAPISearchInstance() : ApiService {
+            if (apiServiceLog == null) {
+                apiServiceLog = Retrofit.Builder()
+                    .baseUrl("http://100002.pythonanywhere.com/")
                     .addConverterFactory(GsonConverterFactory.create())
                     .client(getRetrofitClient())
                     .build()
