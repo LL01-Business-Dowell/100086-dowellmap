@@ -1,7 +1,11 @@
 package com.dowell.dowellmap.data
 
+import com.dowell.dowellmap.data.model.APISearchPost
+import com.dowell.dowellmap.data.model.EventCreationPost
 import com.dowell.dowellmap.data.model.LogPost
 import com.dowell.dowellmap.data.network.ApiService
+import com.dowell.dowellmap.data.network.ApiService.Companion.getAPISearchInstance
+import com.dowell.dowellmap.data.network.ApiService.Companion.getEventCreationInstance
 import com.dowell.dowellmap.data.network.ApiService.Companion.getInstance
 import com.dowell.dowellmap.data.network.ApiService.Companion.getLogInstance
 import com.dowell.dowellmap.data.network.SafeApiCall
@@ -42,6 +46,18 @@ class SearchRepository: SafeApiCall {
     suspend fun makeLog(logPost: LogPost) = safeApiCall {
         getLogInstance().logUser(
             logPost
+        )
+    }
+
+    suspend fun makeEventCreation(eventCreationPost: EventCreationPost) = safeApiCall {
+        getEventCreationInstance().eventCreation(
+            eventCreationPost
+        )
+    }
+
+suspend fun makeAPISearch(apiSearchPost: APISearchPost) = safeApiCall {
+    getAPISearchInstance().apiSearch(
+            apiSearchPost
         )
     }
 

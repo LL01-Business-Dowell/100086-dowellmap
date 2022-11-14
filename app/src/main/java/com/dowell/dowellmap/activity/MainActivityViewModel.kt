@@ -39,6 +39,15 @@ class MainActivityViewModel @Inject constructor(
     private val _qrId = MutableLiveData<Resource<Call<UserLogResponse>>>()
     val qrId : LiveData<Resource<Call<UserLogResponse>>> get() = _qrId
 
+    private val _text = MutableLiveData<Resource<Call<EventCreationResponse>>>()
+    val text : LiveData<Resource<Call<EventCreationResponse>>> get() = _text
+
+    private val _isSuccess = MutableLiveData<Resource<Call<ApiSearchResponse>>>()
+    val isSuccess : LiveData<Resource<Call<ApiSearchResponse>>> get() = _isSuccess
+
+    private val _inserted_id = MutableLiveData<Resource<Call<ApiSearchResponse>>>()
+    val inserted_id : LiveData<Resource<Call<ApiSearchResponse>>> get() = _inserted_id
+
     fun getLocationChange(location: Location){
         _currentLocationCord.value=location
     }
@@ -113,6 +122,17 @@ class MainActivityViewModel @Inject constructor(
     fun logUser(logPost: LogPost){
         viewModelScope.launch {
             _qrId.value=searchRepository.makeLog(logPost)
+        }
+    }
+    fun userCreateEvent(eventCreationPost: EventCreationPost){
+        viewModelScope.launch {
+            _text.value=searchRepository.makeEventCreation(eventCreationPost)
+        }
+    }
+    fun apiSearch(apiSearchPost: APISearchPost){
+        viewModelScope.launch {
+            _isSuccess.value=searchRepository.makeAPISearch(apiSearchPost)
+            _inserted_id.value=searchRepository.makeAPISearch(apiSearchPost)
         }
     }
     suspend fun setQrId(qrId:String){
