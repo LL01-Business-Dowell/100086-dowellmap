@@ -90,6 +90,7 @@ class SearchFragment : Fragment(), LocationListAdapter.RemoveListener {
                                 toast("Request Failed", requireContext())
                             }
 
+                            else -> {}
                         }
 
                     }
