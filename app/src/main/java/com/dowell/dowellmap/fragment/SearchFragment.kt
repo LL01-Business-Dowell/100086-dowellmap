@@ -164,8 +164,6 @@ class SearchFragment : Fragment(), LocationListAdapter.RemoveListener {
 
         }
 
-
-
     }
 
 

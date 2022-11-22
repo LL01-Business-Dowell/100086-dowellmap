@@ -5,7 +5,7 @@ import kotlinx.parcelize.Parcelize
 import android.os.Parcelable
 
 @Parcelize
-data class ApiSearchResponse(
-    var isSuccess: String? = null,
+data class CustomApiResponse(
+    var isSuccess: Boolean? = null,
     var inserted_id: String? = null
 ) : Parcelable

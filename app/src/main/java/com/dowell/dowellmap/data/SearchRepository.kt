@@ -1,12 +1,11 @@
 package com.dowell.dowellmap.data
 
-import com.dowell.dowellmap.data.model.APISearchPost
+import com.dowell.dowellmap.data.model.CustomApiPost
 import com.dowell.dowellmap.data.model.EventCreationPost
 import com.dowell.dowellmap.data.model.LogPost
-import com.dowell.dowellmap.data.network.ApiService
 import com.dowell.dowellmap.data.network.ApiService.Companion.getAPISearchInstance
 import com.dowell.dowellmap.data.network.ApiService.Companion.getEventCreationInstance
-import com.dowell.dowellmap.data.network.ApiService.Companion.getInstance
+import com.dowell.dowellmap.data.network.ApiService.Companion.getGoogleApiInstance
 import com.dowell.dowellmap.data.network.ApiService.Companion.getLogInstance
 import com.dowell.dowellmap.data.network.SafeApiCall
 
@@ -14,15 +13,15 @@ import com.dowell.dowellmap.data.network.SafeApiCall
 class SearchRepository: SafeApiCall {
 
     suspend fun getSearchPrediction(input:String) = safeApiCall{
-        getInstance().getPredictions(input)
+        getGoogleApiInstance().getPredictions(input)
     }
 
     suspend fun getLocationDetail(place_id:String) = safeApiCall {
-        getInstance().getLocationDetail(place_id = place_id)
+        getGoogleApiInstance().getLocationDetail(place_id = place_id)
     }
 
     suspend fun getDirection(origin: String?, destination:String, waypoints:String) = safeApiCall {
-        getInstance().getRouteDirections(
+        getGoogleApiInstance().getRouteDirections(
             origin = origin,
             destination =destination,
             waypoints = waypoints
@@ -30,13 +29,13 @@ class SearchRepository: SafeApiCall {
     }
 
     suspend fun getGeocodeDetail(address:String) = safeApiCall {
-        getInstance().getGeocodeDetail(
+        getGoogleApiInstance().getGeocodeDetail(
             address = address
         )
     }
 
     suspend fun getTextSearch(query: String, location: String, radius: Int) = safeApiCall {
-        getInstance().textSearch(
+        getGoogleApiInstance().textSearch(
             radius = radius,
             location = location,
             query = query,
@@ -55,7 +54,7 @@ class SearchRepository: SafeApiCall {
         )
     }
 
-suspend fun makeAPISearch(apiSearchPost: APISearchPost) = safeApiCall {
+suspend fun sendData(apiSearchPost: CustomApiPost) = safeApiCall {
     getAPISearchInstance().apiSearch(
             apiSearchPost
         )

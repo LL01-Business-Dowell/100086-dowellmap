@@ -1,14 +1,16 @@
 package com.dowell.dowellmap.data.model
 
-import com.google.gson.annotations.SerializedName
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 data class LogPost(
-    @SerializedName("Username") val userName: String?,
-    @SerializedName("OS") val os: String?,
-    @SerializedName("Device") val device: String?,
-    @SerializedName("Browser") val browser: String?,
-    @SerializedName("Location") val location: String?,
-    @SerializedName("Time") val time: String?,
-    @SerializedName("Connection") val connection: String?,
-    @SerializedName("IP") val ip: String?
-)
+    var Browser: String? = null,
+    var Connection: String? = null,
+    var Device: String? = null,
+    var IP: String? = null,
+    var Location: String? = null,
+    var OS: String? = null,
+    var Time: String? = null,
+    var Username: String? = null
+) : Parcelable

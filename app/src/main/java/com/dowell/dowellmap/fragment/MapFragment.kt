@@ -5,16 +5,18 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
-import android.view.InputQueue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import com.dowell.dowellmap.R
 import com.dowell.dowellmap.activity.MainActivityViewModel
+import com.dowell.dowellmap.data.model.CustomApiPost
+import com.dowell.dowellmap.data.model.EventCreationPost
 import com.dowell.dowellmap.data.model.InputSearchModel
 import com.dowell.dowellmap.data.network.Resource
 import com.dowell.dowellmap.databinding.FragmentMapBinding
@@ -27,11 +29,11 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.gson.GsonBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlin.math.cos
-import kotlin.math.sin
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -51,6 +53,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     val mapArgs: MapFragmentArgs by navArgs()
 
+    @Inject
+    lateinit var gson: GsonBuilder
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -58,6 +63,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
 
+        //var f= gson.create().toJson(testData::class)
         //Initialize map support fragment
         mapFragment =
             childFragmentManager.findFragmentById(R.id.mapView) as SupportMapFragment
@@ -70,17 +76,104 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             originLocation = currentLoccation
         }
 
+        viewModel.eventId.observe(viewLifecycleOwner) {
+            lifecycleScope.launch {
+                when (it) {
+                    is Resource.Success -> {
+
+                        val eventId = it.value.string()
+                        //send place request
+                        sendData(
+                            CustomApiPost.Field.TestData(
+                                startLocation = origin,
+                                queryText = query,
+                                radiusDistance = radius.toString(),
+                                eventId = eventId,
+                            )
+                        )
+
+                        //send place log
+                        sendData(
+                            CustomApiPost.Field.TestData(
+                                reqId = viewModel.getInsertId(),
+                                reqType = "near_by_places",
+                                eventId = eventId,
+                                dataTimeDone = viewModel.getCurrentTime(),
+                                userName = viewModel.getUsername(),
+                                sessionId = viewModel.getLoginId(),
+                                locationDone = origin
+
+                            ))
+                    }
+
+                    is Resource.Failure -> {
+                        toast("Background event id request failed", requireContext())
+                    }
+
+                    else -> {
+                        toast("Something went wrong!", requireContext())
+                    }
+                }
+            }
+        }
+        viewModel.customApiResponse.observe(viewLifecycleOwner) {
+            lifecycleScope.launch {
+                when (it) {
+                    is Resource.Success -> {
+                        it.value.isSuccess?.let { it1 -> viewModel.setIsError(it1) }
+
+                        if (it.value.isSuccess == true) {
+                            it.value.inserted_id?.let { it1 -> viewModel.setInsertId(it1) }
+                        }
+                    }
+
+                    is Resource.Failure -> {
+                        toast("Background insert id request failed", requireContext())
+                    }
+
+                    else -> {
+                        toast("Something went wrong!", requireContext())
+                    }
+                }
+            }
+        }
+
         binding.searchBtn.setOnClickListener {
             if (origin.isNotEmpty()) {
                 mMap.clear()
-                viewModel.setInputSearch(
-                    query = binding.edtText.text.toString(),
-                    location = origin,
-                    radius = binding.edtRadius.text.toString()
-                )
                 radius = binding.edtRadius.text.toString().toInt()
                 query = binding.edtText.text.toString()
-            }else{
+
+                viewModel.setInputSearch(
+                    query = query,
+                    location = origin,
+                    radius = radius.toString()
+                ).invokeOnCompletion {
+                    //request 1: get event Id request
+                    viewModel.userCreateEvent(
+                        EventCreationPost(
+                            platformCode = "FB",
+                            cityCode = "101",
+                            dayCode = "0",
+                            dbCode = "pfm",
+                            ipAddress = viewModel.getIpAddr(),
+                            loginID = viewModel.getLoginId(),
+                            sessionID = viewModel.getLoginId(),
+                            processCode = "1",
+                            regionalTime = viewModel.getCurrentTime(),
+                            dowellTime = viewModel.getCurrentTime(),
+                            location = origin,
+                            objectCode = "1",
+                            instanceCode = "100086",
+                            context = "afdafa",
+                            documentID = "3004",
+                            rules = "some rules",
+                            status = "work"
+                        )
+                    )
+                }
+
+            } else {
                 toast("Please enable location", requireContext())
             }
 
@@ -90,6 +183,27 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         return binding.root
     }
 
+    fun sendData(data: CustomApiPost.Field.TestData) {
+
+        val field = CustomApiPost.Field(
+            testData = data
+        )
+        viewModel.sendApiData(
+            CustomApiPost(
+                cluster = "dowellmap",
+                database = "dowellmap",
+                collection = "nearby_places_req",
+                document = "nearby_places_req",
+                teamMemberID = "1153",
+                functionID = "ABCDE",
+                command = "insert",
+                field = field,
+                updateField = CustomApiPost.UpdateField(1),
+                platform = "bangalore"
+
+            )
+        )
+    }
 
     fun getRoute() {
 
@@ -213,10 +327,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 lifecycleScope.launch {
                     when (it) {
                         is Resource.Success -> {
-
                             //draw circumference
                             val center = stringToCoordinate(origin)
-
                             val circleOptions = CircleOptions()
                             circleOptions.center(center)
                             circleOptions.radius(radius.toDouble())
@@ -226,15 +338,25 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
                             mMap.addCircle(circleOptions)
 
-                            val selectedLocation=computeDistance(
+                            //send places response
+                            sendData(
+                                CustomApiPost.Field.TestData(
+                                    reqId = viewModel.getInsertId(),
+                                    is_error = viewModel.getIsError(),
+                                    data = it.value.toString()
+                                    ))
+
+                            val selectedLocation = computeDistance(
                                 originLocation,
                                 it.value
                             ).results?.filter { it.radius!! <= radius }.also { results ->
                                 if (results != null) {
-                                    if(results.isEmpty()) {
-                                        toast("There is no $query within $radius meters",
-                                            requireContext())
-                                    }else{
+                                    if (results.isEmpty()) {
+                                        toast(
+                                            "There is no $query within $radius meters",
+                                            requireContext()
+                                        )
+                                    } else {
                                         results.forEach {
                                             it.geometry?.location?.getLatLng()?.let { latlng ->
 
@@ -263,6 +385,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     .build()
 
                             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+
+
 
                             binding.progressBar.visibility = View.INVISIBLE
 

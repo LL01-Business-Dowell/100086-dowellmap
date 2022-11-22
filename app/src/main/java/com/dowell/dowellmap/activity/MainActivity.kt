@@ -84,37 +84,47 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        val mobileIp = ipAddress()
-        val currentDate = DateFormat.getDateInstance().format(Date())
+        with(viewModel){
+            setUsername("user-" + LogDeviceInfo.generateUserName(10))
+            setCurrentTime(DateFormat.getDateInstance().format(Date()))
+            ipAddress()?.let { setIpAddr(it) }
+
+        }
+
 
         val city = currentLocation?.latitude?.let { coordinateToString(it,
             currentLocation?.latitude!!
         ) }
 
 
+
         //asynchronous user log sent
         viewModel.logUser(
             LogPost(
-                userName = "user-" + LogDeviceInfo.generateUserName(10),
-                os = "android",
-                device = "mobile",
-                browser = "dowell map mobile",
-                location = city,
-                time = currentDate,
-                connection = networkState(this),
-                ip = mobileIp
+                Username = viewModel.getUsername(),
+                OS = "android",
+                Device = "mobile",
+                Browser = "dowell map mobile",
+                Location = "null",
+                Time = viewModel.getCurrentTime(),
+                Connection = networkState(this),
+                IP = viewModel.getIpAddr()
             )
         )
-
 
 
         //temp store qrId in datastore
         viewModel.qrId.observe(this) {
             lifecycleScope.launch {
+
                 when (it) {
                     is Resource.Success -> {
-                        Log.i("LogResponse", it.value.toString())
-                       // it.value.qrid?.let { it1 -> viewModel.setQrId(qrId = it1) }
+                        //Log.i("LogResponse", it.value.qtoString())
+                        it.value.qrid.let { it1 ->
+                            if (it1 != null) {
+                                viewModel.setLoginId(it1)
+                            }
+                        }
                         toast("Successfully log user",this@MainActivity)
                     }
 

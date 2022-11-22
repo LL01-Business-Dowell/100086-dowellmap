@@ -1,9 +1,9 @@
-package com.dowell.di
+package com.dowell.dowellmap.di
 
 import android.content.Context
 import com.dowell.dowellmap.data.SearchRepository
 import com.dowell.dowellmap.data.UserDatastore
-import com.dowell.dowellmap.data.network.ApiService
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,6 +21,11 @@ object AppModule {
         return SearchRepository()
     }
 
+    @Singleton
+    @Provides
+    fun provideGson(): GsonBuilder {
+        return GsonBuilder()
+    }
 
     @Singleton
     @Provides

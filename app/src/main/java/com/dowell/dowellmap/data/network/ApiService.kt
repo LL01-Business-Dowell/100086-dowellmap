@@ -4,8 +4,6 @@ import com.dowell.dowellmap.data.model.*
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
-import retrofit.RxJavaCallAdapterFactory
-import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -51,64 +49,50 @@ interface ApiService {
     ) : GeocodeModel
 
 
-    @POST("api/linkbased/")
-    fun logUser(@Body logpost: LogPost): Call<UserLogResponse>
+    @POST("linkbased/")
+    suspend fun logUser(@Body logpost: LogPost): UserLogResponse
 
-    @POST("event_creation/")
-    fun eventCreation(@Body eventCreationPost: EventCreationPost): Call<EventCreationResponse>
+    @POST("event_creation")
+    suspend fun eventCreation(@Body eventCreationPost: EventCreationPost): ResponseBody
 
-    @POST("")
-    fun apiSearch(@Body apiSearchPost: APISearchPost): Call<ApiSearchResponse>
+    @POST("/")
+    suspend fun apiSearch(@Body customApiPost: CustomApiPost): CustomApiResponse
 
     companion object {
-        var apiService: ApiService? = null
-        var apiServiceLog: ApiService? = null
-        fun getInstance() : ApiService {
-            if (apiService == null) {
-                apiService = Retrofit.Builder()
-                    .baseUrl("https://maps.googleapis.com/maps/api/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .client(getRetrofitClient())
-                    .build()
-                    .create(ApiService::class.java)
-            }
-            return apiService!!
+        fun getGoogleApiInstance(): ApiService {
+            return Retrofit.Builder()
+                .baseUrl("https://maps.googleapis.com/maps/api/")
+                .client(getRetrofitClient())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(ApiService::class.java)
         }
 
         fun getLogInstance() : ApiService {
-            if (apiServiceLog == null) {
-                apiServiceLog = Retrofit.Builder()
-                    .baseUrl("https://100014.pythonanywhere.com/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .client(getRetrofitClient())
-                    .build()
-                    .create(ApiService::class.java)
-            }
-            return apiServiceLog!!
+            return Retrofit.Builder()
+                .baseUrl("https://100014.pythonanywhere.com/api/")
+                .client(getRetrofitClient())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(ApiService::class.java)
         }
 
         fun getEventCreationInstance() : ApiService {
-            if (apiServiceLog == null) {
-                apiServiceLog = Retrofit.Builder()
-                    .baseUrl("https://100003.pythonanywhere.com/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .client(getRetrofitClient())
-                    .build()
-                    .create(ApiService::class.java)
-            }
-            return apiServiceLog!!
+            return Retrofit.Builder()
+                .baseUrl("https://100003.pythonanywhere.com/")
+                .client(getRetrofitClient())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(ApiService::class.java)
         }
 
         fun getAPISearchInstance() : ApiService {
-            if (apiServiceLog == null) {
-                apiServiceLog = Retrofit.Builder()
-                    .baseUrl("http://100002.pythonanywhere.com/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .client(getRetrofitClient())
-                    .build()
-                    .create(ApiService::class.java)
-            }
-            return apiServiceLog!!
+            return Retrofit.Builder()
+                .baseUrl("http://100002.pythonanywhere.com")
+                .client(getRetrofitClient())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(ApiService::class.java)
         }
 
         private fun getRetrofitClient(): OkHttpClient {
@@ -116,7 +100,6 @@ interface ApiService {
                 .addInterceptor { chain ->
                     chain.proceed(
                         chain.request().newBuilder().also {
-                            it.addHeader("Accept", "*/*")
                             it.addHeader("Content-Type", "application/json")
                         }.build()
                     )
