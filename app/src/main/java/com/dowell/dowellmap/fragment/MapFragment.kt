@@ -1,23 +1,31 @@
 package com.dowell.dowellmap.fragment
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextUtils
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.asFlow
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import com.dowell.dowellmap.R
 import com.dowell.dowellmap.activity.MainActivityViewModel
+import com.dowell.dowellmap.adapter.SearchAdapter
 import com.dowell.dowellmap.data.model.CustomApiPost
 import com.dowell.dowellmap.data.model.EventCreationPost
 import com.dowell.dowellmap.data.model.InputSearchModel
+import com.dowell.dowellmap.data.model.LocationModel
 import com.dowell.dowellmap.data.network.Resource
 import com.dowell.dowellmap.databinding.FragmentMapBinding
 import com.dowell.dowellmap.toast
@@ -25,19 +33,18 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.CircleOptions
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.gson.GsonBuilder
+import com.google.maps.android.PolyUtil
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class MapFragment : Fragment(), OnMapReadyCallback {
+class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
@@ -50,8 +57,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var originLocation: Location
     private var radius: Int = 0
     private var destination: String = ""
-
+    private lateinit var cameraPosition: CameraPosition
+    private var path: MutableList<List<LatLng>> = arrayListOf()
+    private var polylines: ArrayList<Polyline> = arrayListOf()
     val mapArgs: MapFragmentArgs by navArgs()
+    lateinit var searchAdapter: SearchAdapter
+    lateinit var selectedPlace: LocationModel.Prediction
 
     @Inject
     lateinit var gson: GsonBuilder
@@ -63,7 +74,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
 
-        //var f= gson.create().toJson(testData::class)
         //Initialize map support fragment
         mapFragment =
             childFragmentManager.findFragmentById(R.id.mapView) as SupportMapFragment
@@ -71,9 +81,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         viewModel.currentLocationCord.observe(
             viewLifecycleOwner
-        ) { currentLoccation ->
-            origin = coordinateToString(currentLoccation.latitude, currentLoccation.longitude)
-            originLocation = currentLoccation
+        ) { currentLocation ->
+            origin = coordinateToString(currentLocation.latitude, currentLocation.longitude)
+            originLocation = currentLocation
         }
 
         viewModel.eventId.observe(viewLifecycleOwner) {
@@ -103,7 +113,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                 sessionId = viewModel.getLoginId(),
                                 locationDone = origin
 
-                            ))
+                            )
+                        )
                     }
 
                     is Resource.Failure -> {
@@ -136,6 +147,54 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     }
                 }
             }
+        }
+        with(binding) {
+            resetBtn.setOnClickListener {
+                mMap.clear()
+                edtRadius.text.clear()
+                edtText.text.clear()
+            }
+
+            autoCompleteTextView.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+
+                }
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    if (!TextUtils.isEmpty(s)) {
+                        viewModel.setQuery(s.toString())
+                    }
+
+                }
+                override fun afterTextChanged(s: Editable?) {}
+            })
+        }
+
+
+        lifecycleScope.launch {
+            viewModel.searchResults.asFlow()
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .distinctUntilChanged()
+                .collect { data ->
+                    when (data) {
+                        is Resource.Success -> {
+                            if (data.value.predictions?.isNotEmpty() == true) {
+                                Log.i("DataSize", data.value.predictions?.size.toString())
+                                data.value.predictions?.let { displayResult(it as ArrayList<LocationModel.Prediction?>) }
+                            }
+                        }
+                        is Resource.Failure -> {
+                            toast("Request Failed", requireContext())
+                        }
+
+                        else -> {}
+                    }
+
+                }
         }
 
         binding.searchBtn.setOnClickListener {
@@ -183,7 +242,79 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         return binding.root
     }
 
-    fun sendData(data: CustomApiPost.Field.TestData) {
+    @SuppressLint("NotifyDataSetChanged")
+    private fun displayResult(data: ArrayList<LocationModel.Prediction?>) {
+
+        searchAdapter = SearchAdapter(requireContext(), data)
+        binding.autoCompleteTextView.setAdapter(searchAdapter)
+        searchAdapter.notifyDataSetChanged()
+
+        binding.autoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
+
+            selectedPlace = searchAdapter.getItem(position)!!
+            binding.autoCompleteTextView.setText("")
+
+            //call place detail api
+            if (viewModel.selectedPredictions.size <= 4) {
+                selectedPlace.place_id?.let { viewModel.getPlaceDetail(it) }
+            }else{
+                toast("Maximum location reached", requireContext())
+            }
+
+            viewModel.locationDetailResults.observe(viewLifecycleOwner) {
+                lifecycleScope.launch {
+                    when (it) {
+                        is Resource.Success -> {
+                            binding.progressBar.visibility = View.INVISIBLE
+                            if (it.value.result != null) {
+
+                                //pass object to viewModel for addition
+                                // to selected location
+                                viewModel.setSelectedPrediction(it.value)
+                                val location=it.value.result?.geometry?.location?.getLatLng()
+
+                                location?.let { latlng ->
+                                    MarkerOptions()
+                                        .position(latlng)
+                                        .title(it.value.result!!.name)
+                                }?.let { mapOption ->
+                                    val marker = mMap.addMarker(
+                                        mapOption
+                                    )
+                                    marker?.tag = resources.getString(R.string.start_marker)
+                                    marker?.showInfoWindow()
+                                }
+
+                                cameraPosition = location?.let { it1 ->
+                                    CameraPosition.Builder().target(it1)
+                                        .tilt(60f)
+                                        .zoom(16f)
+                                        .bearing(180f)
+                                        .build()
+                                }!!
+
+                                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+
+                            } else {
+                                toast("No result", requireContext())
+                            }
+                        }
+                        is Resource.Loading -> {
+                            binding.progressBar.visibility = View.VISIBLE
+                        }
+                        is Resource.Failure -> {
+                            binding.progressBar.visibility = View.INVISIBLE
+                            toast("Request Failed", requireContext())
+                        }
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    private fun sendData(data: CustomApiPost.Field.TestData) {
 
         val field = CustomApiPost.Field(
             testData = data
@@ -246,81 +377,50 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         return LatLng(lat, lng)
     }
 
+    @SuppressLint("PotentialBehaviorOverride")
     override fun onMapReady(map: GoogleMap) {
         mMap = map
+        mMap.setOnMarkerClickListener(this)
         mMap.isMyLocationEnabled = true
+        viewModel.directionResponse.observe(this) {
+            if (view != null) {
+                    when (it) {
+                        is Resource.Success -> {
+                            //Draw routing path
+                            it.value.routes?.get(0)?.legs?.forEach { legs ->
+                                path.clear()
+                                val step = legs.steps
+                                for (i in 0 until step?.size!!) {
+                                    val points = step[i].polyline?.points
+                                    path.add(PolyUtil.decode(points))
+                                }
 
-        /* viewModel.directionResponse.observe(this) {
-             if (view != null) {
-                 lifecycleScope.launch {
-                     when (it) {
-                         is Resource.Success -> {
-                             //Draw routing path
-                             val path: MutableList<List<LatLng>> = ArrayList()
-                             it.value.routes?.get(0)?.legs?.forEach { it ->
-                                 val step = it.steps
-                                 for (i in 0 until step?.size!!) {
-                                     val points = step[i].polyline?.points
-                                     path.add(PolyUtil.decode(points))
-                                 }
+                               addPathToMap(path)
+                            }
 
-                                 for (i in 0 until path.size) {
-                                     mMap.addPolyline(
-                                         PolylineOptions().addAll(path[i])
-                                             .color(Color.parseColor("#005734"))
-                                     )
-                                 }
-                             }
+                            cameraPosition =
+                                CameraPosition.Builder().target(stringToCoordinate(origin))
+                                    .tilt(60f)
+                                    .zoom(16f)
+                                    .bearing(180f)
+                                    .build()
 
+                            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
 
-                             //set origin marker and camera property
-                             mMap.addMarker(
-                                 MarkerOptions()
-                                     .position(stringToCoordinate(origin))
-                                     .title("Start Location")
-
-                             )?.showInfoWindow()
-
-                             //set waypoint(s) maker including the destination
-                             mapArgs.placeModel?.forEach {
-                                 it.result?.geometry?.location?.getLatLng()?.let { latlng ->
-
-                                     MarkerOptions()
-                                         .position(latlng)
-                                         .title(it?.result?.formatted_address)
+                            binding.progressBar.visibility = View.INVISIBLE
+                        }
+                        is Resource.Failure -> {
+                            binding.progressBar.visibility = View.INVISIBLE
+                            toast("Routing Failed", requireContext())
+                        }
+                        is Resource.Loading -> {
+                            binding.progressBar.visibility = View.VISIBLE
+                        }
+                    }
 
 
-                                 }?.let { mapOption ->
-                                     mMap.addMarker(
-                                         mapOption
-                                     )?.showInfoWindow()
-                                 }
-
-                             }
-
-                             val cameraPosition =
-                                 CameraPosition.Builder()
-                                     .target(stringToCoordinate(origin))
-                                     .tilt(60f)
-                                     .zoom(8f)
-                                     .bearing(0f)
-                                     .build()
-
-                             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
-
-                         }
-                         is Resource.Failure -> {
-                             toast("Routing Failed", requireContext())
-                         }
-                         is Resource.Loading -> {
-                             toast("Routing...", requireContext())
-                         }
-                     }
-
-                 }
-
-             }
-         }*/
+            }
+        }
 
         viewModel.textResponse.observe(this) {
             if (view != null) {
@@ -334,7 +434,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                             circleOptions.radius(radius.toDouble())
                             circleOptions.fillColor(Color.parseColor("#6DFFFFFF"))
                             circleOptions.strokeColor(Color.parseColor("#005734"))
-                            circleOptions.strokeWidth(2f)
+                            circleOptions.strokeWidth(4f)
 
                             mMap.addCircle(circleOptions)
 
@@ -344,7 +444,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     reqId = viewModel.getInsertId(),
                                     is_error = viewModel.getIsError(),
                                     data = it.value.toString()
-                                    ))
+                                )
+                            )
 
                             val selectedLocation = computeDistance(
                                 originLocation,
@@ -359,37 +460,31 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     } else {
                                         results.forEach {
                                             it.geometry?.location?.getLatLng()?.let { latlng ->
-
                                                 MarkerOptions()
                                                     .position(latlng)
                                                     .title(it.name)
-
                                             }?.let { mapOption ->
-                                                mMap.addMarker(
+                                                val marker = mMap.addMarker(
                                                     mapOption
-                                                )?.showInfoWindow()
+                                                )
+                                                marker?.tag = mapOption.position
+                                                marker?.showInfoWindow()
                                             }
                                         }
-
                                     }
                                 }
                             }
 
 
-                            val cameraPosition =
-                                CameraPosition.Builder()
-                                    .target(stringToCoordinate(origin))
+                            cameraPosition =
+                                CameraPosition.Builder().target(stringToCoordinate(origin))
                                     .tilt(60f)
-                                    .zoom(17f)
+                                    .zoom(14f)
                                     .bearing(0f)
                                     .build()
 
                             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
-
-
-
                             binding.progressBar.visibility = View.INVISIBLE
-
                         }
                         is Resource.Failure -> {
                             binding.progressBar.visibility = View.INVISIBLE
@@ -397,13 +492,25 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         }
                         is Resource.Loading -> {
                             binding.progressBar.visibility = View.VISIBLE
-                            toast("Routing...", requireContext())
                         }
                     }
 
                 }
 
             }
+        }
+    }
+
+    private fun addPathToMap(path: MutableList<List<LatLng>>) {
+        for (i in 0 until path.size) {
+            polylines.add(mMap.addPolyline(
+                PolylineOptions().addAll(path[i])
+                    .color(
+                        Color.RED
+                    )
+                    .width(4f)
+
+            ))
         }
     }
 
@@ -417,15 +524,35 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             point2.latitude = data.geometry?.location?.lat!!
             point2.longitude = data.geometry?.location?.lng!!
             data.radius = currentLocationCord.distanceTo(point2).toInt()
-
         }
-
         return inputSearchModel
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         lifecycleScope.cancel()
+    }
+
+    override fun onMarkerClick(marker: Marker): Boolean {
+        if (marker.tag!=resources.getString(R.string.start_marker)){
+            val position = marker.tag as LatLng
+
+            binding.progressBar.visibility = View.VISIBLE
+
+            if(polylines.isNotEmpty()){
+                for (polyline in polylines) {
+                    polyline.remove()
+                }
+                polylines.clear()
+            }
+
+            viewModel.setDirectionQuery(
+                origin = origin,
+                destination = coordinateToString(position.latitude, position.longitude)
+            )
+        }
+
+        return false
     }
 
 }

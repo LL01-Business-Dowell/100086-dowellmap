@@ -93,6 +93,8 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="error_msg">No Internet connection</string>
     <string name="radius">Radius(m)</string>
-    <string name="search_text">Search Text</string>
+    <string name="search_text">Search e.g Park, Church</string>
     <string name="search_location">Search Location</string>
+    <string name="reset_map">Reset Map</string>
+    <string name="start_marker">start_loc</string>
 </resources>

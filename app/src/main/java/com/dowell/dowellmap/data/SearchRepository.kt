@@ -20,7 +20,7 @@ class SearchRepository: SafeApiCall {
         getGoogleApiInstance().getLocationDetail(place_id = place_id)
     }
 
-    suspend fun getDirection(origin: String?, destination:String, waypoints:String) = safeApiCall {
+    suspend fun getDirection(origin: String?, destination:String, waypoints:String?=null) = safeApiCall {
         getGoogleApiInstance().getRouteDirections(
             origin = origin,
             destination =destination,

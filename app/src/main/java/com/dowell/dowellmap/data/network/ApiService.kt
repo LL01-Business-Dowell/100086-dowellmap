@@ -38,7 +38,7 @@ interface ApiService {
         @Query("origin") origin: String?,
         @Query("destination") destination: String,
         @Query("mode") mode: String="driving",
-        @Query("waypoints") waypoints: String,
+        @Query("waypoints") waypoints: String?=null,
         @Query("key") key: String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
     ) : DirectionResponse
 

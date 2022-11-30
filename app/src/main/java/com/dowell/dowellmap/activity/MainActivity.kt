@@ -52,9 +52,6 @@ class MainActivity : AppCompatActivity() {
     private var currentLocation: Location? = null
     private lateinit var locationCallback: LocationCallback
 
-    @Inject
-    lateinit var userDatastore: UserDatastore
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)

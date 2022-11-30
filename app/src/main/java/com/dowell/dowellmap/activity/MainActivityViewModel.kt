@@ -137,8 +137,7 @@ class MainActivityViewModel @Inject constructor(
     }
 
 
-
-    fun setDirectionQuery(origin: String, destination:String, waypoints:String) {
+    fun setDirectionQuery(origin: String, destination:String, waypoints:String?=null) {
         viewModelScope.launch {
             _directionResponse.value = searchRepository.getDirection(origin,destination, waypoints)
         }
