@@ -377,7 +377,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 field = CustomApiPost.Field(
                     startLocation = origin,
                     queryText = query,
-                    radiusDistanceFrom = "0",
+                    radiusDistanceFrom = "TODO()", // TODO()
                     radiusDistanceTo = radius.toString(),
                     eventId = eventId,
                     url = "None",
