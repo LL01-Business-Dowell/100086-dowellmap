@@ -2,6 +2,7 @@ package com.dowell.dowellmap.fragment
 
 import android.annotation.SuppressLint
 import android.graphics.Color
+import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
@@ -12,6 +13,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -35,12 +37,15 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
 import com.google.maps.android.PolyUtil
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 
 @AndroidEntryPoint
@@ -54,6 +59,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
     private var waypoint: String = ""
     private var origin: String = ""
     private lateinit var query: String
+    private var eventId: String = ""
     private lateinit var originLocation: Location
     private var radius: Int = 0
     private var destination: String = ""
@@ -63,6 +69,11 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
     val mapArgs: MapFragmentArgs by navArgs()
     lateinit var searchAdapter: SearchAdapter
     lateinit var selectedPlace: LocationModel.Prediction
+    private var start_address = ""
+    private var customAPIAddress = ""
+    private var customAPILat_Lon = ""
+    private var customAPIdata = ""
+    private var adresList: MutableList<String> = arrayListOf()
 
     @Inject
     lateinit var gson: GsonBuilder
@@ -74,6 +85,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
 
+
+
         //Initialize map support fragment
         mapFragment =
             childFragmentManager.findFragmentById(R.id.mapView) as SupportMapFragment
@@ -84,6 +97,12 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         ) { currentLocation ->
             origin = coordinateToString(currentLocation.latitude, currentLocation.longitude)
             originLocation = currentLocation
+            val geoCoder = Geocoder(requireContext(), Locale.getDefault())
+             val startAddress = geoCoder.getFromLocation(currentLocation.latitude, currentLocation.longitude, 3)
+                for(e in startAddress!!){
+                    start_address = "${e.locality}, ${e.countryName}"
+                }
+
         }
 
         viewModel.eventId.observe(viewLifecycleOwner) {
@@ -91,28 +110,29 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 when (it) {
                     is Resource.Success -> {
 
-                        val eventId = it.value.string()
+                         eventId = it.value.string()
+                        Toast.makeText(requireContext(), eventId, Toast.LENGTH_LONG).show()
                         //send place request
-                        sendData(
-                            CustomApiPost.Field.TestData(
-                                startLocation = origin,
-                                queryText = query,
-                                radiusDistance = radius.toString(),
-                                eventId = eventId,
-                            )
+
+                        sendNearbyLogData(
+                                address = CustomApiPost.Field.Response.Address(
+                                    address = customAPIAddress,
+                                    lat_lon = customAPILat_Lon,
+                                    data = customAPIdata
+                                )
                         )
 
-                        //send place log
-                        sendData(
-                            CustomApiPost.Field.TestData(
+
+                        sendLogData(
+                            CustomApiPost.Field(
                                 reqId = viewModel.getInsertId(),
-                                reqType = "near_by_places",
+                                reqType = "nearby_places",
+                                mongoId = viewModel.getInsertId(),
                                 eventId = eventId,
                                 dataTimeDone = viewModel.getCurrentTime(),
                                 userName = viewModel.getUsername(),
                                 sessionId = viewModel.getLoginId(),
                                 locationDone = origin
-
                             )
                         )
                     }
@@ -184,7 +204,14 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                         is Resource.Success -> {
                             if (data.value.predictions?.isNotEmpty() == true) {
                                 Log.i("DataSize", data.value.predictions?.size.toString())
-                                data.value.predictions?.let { displayResult(it as ArrayList<LocationModel.Prediction?>) }
+                                data.value.predictions?.let {
+                                    displayResult(it as ArrayList<LocationModel.Prediction?>)
+
+//                                    for (e in it){
+//                                        Log.d("DEEMOOO::::::", e.g)
+//                                    }
+
+                                }
                             }
                         }
                         is Resource.Failure -> {
@@ -314,9 +341,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
 
     }
 
-    private fun sendData(data: CustomApiPost.Field.TestData) {
+    private fun sendData(field: CustomApiPost.Field) {
 
         val field = CustomApiPost.Field(
+            eventId = eventId,
             testData = data
         )
         viewModel.sendApiData(
@@ -330,8 +358,56 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 command = "insert",
                 field = field,
                 updateField = CustomApiPost.UpdateField(1),
-                platform = "bangalore"
+                platform = "bangalore",
+            )
+        )
+    }
 
+    private fun sendNearbyLogData(address: CustomApiPost.Field.Response.Address) {
+
+        viewModel.sendApiData(
+            CustomApiPost(
+                cluster = "dowellmap",
+                database = "dowellmap",
+                collection = "nearby_places_req",
+                document = "nearby_places_req",
+                teamMemberID = "1153",
+                functionID = "ABCDE",
+                command = "insert",
+                field = CustomApiPost.Field(
+                    startLocation = origin,
+                    queryText = query,
+                    radiusDistanceFrom = "0",
+                    radiusDistanceTo = radius.toString(),
+                    eventId = eventId,
+                    url = "None",
+                    startAddress = start_address,
+                    response = CustomApiPost.Field.Response(
+                        address
+                    ),
+                    is_error = false,
+                    error = "None"
+                ),
+                updateField = CustomApiPost.UpdateField(1),
+                platform = "bangalore",
+            )
+        )
+    }
+
+    private fun sendLogData(field: CustomApiPost.Field) {
+
+        viewModel.sendApiData(
+            CustomApiPost(
+                cluster = "dowellmap",
+                database = "dowellmap",
+                collection = "log",
+                document = "log",
+                teamMemberID = "1155",
+                functionID = "ABCDE",
+                command = "insert",
+                field = field,
+                updateField = CustomApiPost.UpdateField(1),
+                platform = "bangalore",
             )
         )
     }
@@ -438,9 +514,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
 
                             mMap.addCircle(circleOptions)
 
+
                             //send places response
                             sendData(
-                                CustomApiPost.Field.TestData(
+                                CustomApiPost.Field(
                                     reqId = viewModel.getInsertId(),
                                     is_error = viewModel.getIsError(),
                                     data = it.value.toString()
@@ -458,7 +535,16 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                                             requireContext()
                                         )
                                     } else {
+                                        for (e in results){
+                                            customAPIAddress = e.name.toString()
+                                            customAPILat_Lon =
+                                                e.geometry?.location?.getLatLngToString()
+                                                    .toString()
+                                            customAPIdata = e.toString()
+                                        }
+
                                         results.forEach {
+
                                             it.geometry?.location?.getLatLng()?.let { latlng ->
                                                 MarkerOptions()
                                                     .position(latlng)
