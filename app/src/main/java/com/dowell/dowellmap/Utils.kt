@@ -97,8 +97,8 @@ object LogDeviceInfo {
 
             val geoCoder = Geocoder(context, Locale.getDefault())
             val address = geoCoder.getFromLocation(lat, long, 1)
-            cityName = address[0].locality
-            countryName = address[0].countryName
+            cityName = address?.get(0)?.locality ?: ""
+            countryName = address?.get(0)?.countryName ?: ""
 
         }catch (e:Exception){
             e.printStackTrace()
