@@ -14,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -58,10 +59,15 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
     private lateinit var mapFragment: SupportMapFragment
     private var waypoint: String = ""
     private var origin: String = ""
+    private var customOrigin: String = ""
+    private var customStartLocName: String = ""
+    private lateinit var customLocation: Location
     private lateinit var query: String
     private var eventId: String = ""
     private lateinit var originLocation: Location
-    private var radius: Int = 0
+    private lateinit var autocompleteText: String
+    private var radius1: Int = 0
+    private var radius2: Int = 0
     private var destination: String = ""
     private lateinit var cameraPosition: CameraPosition
     private var path: MutableList<List<LatLng>> = arrayListOf()
@@ -111,7 +117,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                     is Resource.Success -> {
 
                          eventId = it.value.string()
-                        Toast.makeText(requireContext(), eventId, Toast.LENGTH_LONG).show()
+                        //Toast.makeText(requireContext(), eventId, Toast.LENGTH_LONG).show()
                         //send place request
 
                         sendNearbyLogData(
@@ -132,7 +138,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                                 dataTimeDone = viewModel.getCurrentTime(),
                                 userName = viewModel.getUsername(),
                                 sessionId = viewModel.getLoginId(),
-                                locationDone = origin
+                                locationDone = customOrigin.ifEmpty { origin }
                             )
                         )
                     }
@@ -171,7 +177,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         with(binding) {
             resetBtn.setOnClickListener {
                 mMap.clear()
-                edtRadius.text.clear()
+                edtRadius1.text.clear()
+                edtRadius2.text.clear()
                 edtText.text.clear()
             }
 
@@ -224,50 +231,83 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 }
         }
 
-        binding.searchBtn.setOnClickListener {
-            if (origin.isNotEmpty()) {
-                mMap.clear()
-                radius = binding.edtRadius.text.toString().toInt()
-                query = binding.edtText.text.toString()
 
-                viewModel.setInputSearch(
-                    query = query,
-                    location = origin,
-                    radius = radius.toString()
-                ).invokeOnCompletion {
-                    //request 1: get event Id request
-                    viewModel.userCreateEvent(
-                        EventCreationPost(
-                            platformCode = "FB",
-                            cityCode = "101",
-                            dayCode = "0",
-                            dbCode = "pfm",
-                            ipAddress = viewModel.getIpAddr(),
-                            loginID = viewModel.getLoginId(),
-                            sessionID = viewModel.getLoginId(),
-                            processCode = "1",
-                            regionalTime = viewModel.getCurrentTime(),
-                            dowellTime = viewModel.getCurrentTime(),
-                            location = origin,
-                            objectCode = "1",
-                            instanceCode = "100086",
-                            context = "afdafa",
-                            documentID = "3004",
-                            rules = "some rules",
-                            status = "work"
-                        )
-                    )
-                }
-
+        binding.searchTypeSpinner.setOnSpinnerItemSelectedListener<String> { _, _, _, newItem ->
+            if (newItem == "Specified Location") {
+                binding.autoCompleteTextView.visibility = View.VISIBLE
             } else {
-                toast("Please enable location", requireContext())
+                binding.autoCompleteTextView.visibility = View.INVISIBLE
+                customOrigin = ""
+                // customLocation.latitude=null
             }
+        }
+
+        binding.searchBtn.setOnClickListener {
+            with(binding){
+                mMap.clear()
+                radius1 =
+                    edtRadius1.text.toString().toInt()
+                        .plus(1)
+                radius2 =
+                    edtRadius2.text.toString().toInt()
+                        .plus(1)
+                query = edtText.text.toString()
+                autocompleteText = binding.autoCompleteTextView.text.toString()
+
+                if (binding.searchTypeSpinner.text == "Search with") {
+                    toast("Please select search type", requireContext())
+                } else if (radius1 == 0) {
+                    toast("Please enter the first distance", requireContext())
+                } else if (radius2 == 0) {
+                    toast("Please enter the second distance", requireContext())
+                } else if (query.isEmpty()) {
+                    toast("Please enter search query", requireContext())
+                } else if (binding.autoCompleteTextView.isVisible and autocompleteText.isEmpty()) {
+                    toast("Please enter location", requireContext())
+                }else {
+
+                    if (origin.isNotEmpty()) {
+                        viewModel.setInputSearch(
+                            query = query,
+                            location = customOrigin.ifEmpty { origin },
+                            radius = radius2.toString()
+                        ).invokeOnCompletion {
+                            //request 1: get event Id request
+                            viewModel.userCreateEvent(
+                                EventCreationPost(
+                                    platformCode = "FB",
+                                    cityCode = "101",
+                                    dayCode = "0",
+                                    dbCode = "pfm",
+                                    ipAddress = viewModel.getIpAddr(),
+                                    loginID = viewModel.getLoginId(),
+                                    sessionID = viewModel.getLoginId(),
+                                    processCode = "1",
+                                    regionalTime = viewModel.getCurrentTime(),
+                                    dowellTime = viewModel.getCurrentTime(),
+                                    location = customOrigin.ifEmpty { origin },
+                                    objectCode = "1",
+                                    instanceCode = "100086",
+                                    context = "afdafa",
+                                    documentID = "3004",
+                                    rules = "some rules",
+                                    status = "work"
+                                )
+                            )
+                        }
+
+                    } else {
+                        toast("Please enable location", requireContext())
+                    }
+                }
+            }
+
 
         }
 
-        //getRoute()
         return binding.root
     }
+
 
     @SuppressLint("NotifyDataSetChanged")
     private fun displayResult(data: ArrayList<LocationModel.Prediction?>) {
@@ -279,7 +319,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         binding.autoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
 
             selectedPlace = searchAdapter.getItem(position)!!
-            binding.autoCompleteTextView.setText("")
+            binding.autoCompleteTextView.setText(selectedPlace.description)
 
             //call place detail api
             if (viewModel.selectedPredictions.size <= 4) {
@@ -289,59 +329,49 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
             }
 
             viewModel.locationDetailResults.observe(viewLifecycleOwner) {
-                lifecycleScope.launch {
-                    when (it) {
-                        is Resource.Success -> {
-                            binding.progressBar.visibility = View.INVISIBLE
-                            if (it.value.result != null) {
 
-                                //pass object to viewModel for addition
-                                // to selected location
-                                viewModel.setSelectedPrediction(it.value)
-                                val location=it.value.result?.geometry?.location?.getLatLng()
+                when (it) {
+                    is Resource.Success -> {
+                        binding.progressBar.visibility = View.INVISIBLE
+                        if (it.value.result != null) {
 
-                                location?.let { latlng ->
-                                    MarkerOptions()
-                                        .position(latlng)
-                                        .title(it.value.result!!.name)
-                                }?.let { mapOption ->
-                                    val marker = mMap.addMarker(
-                                        mapOption
+                            //pass object to viewModel for addition
+                            // to selected location
+                            viewModel.setSelectedPrediction(it.value)
+                            customStartLocName = it.value.result?.name.toString()
+                            customOrigin = it.value.result?.geometry?.location?.getLatLngToString()
+                                .toString()
+
+                            customLocation = it.value.result?.geometry?.location?.lat?.let { lat ->
+                                it.value.result?.geometry?.location?.lng?.let { lng ->
+                                    convertCoordinateToLocation(
+                                        lat, lng
                                     )
-                                    marker?.tag = resources.getString(R.string.start_marker)
-                                    marker?.showInfoWindow()
                                 }
+                            }!!
 
-                                cameraPosition = location?.let { it1 ->
-                                    CameraPosition.Builder().target(it1)
-                                        .tilt(60f)
-                                        .zoom(16f)
-                                        .bearing(180f)
-                                        .build()
-                                }!!
 
-                                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
-
-                            } else {
-                                toast("No result", requireContext())
-                            }
+                        } else {
+                            toast("No result", requireContext())
                         }
-                        is Resource.Loading -> {
-                            binding.progressBar.visibility = View.VISIBLE
-                        }
-                        is Resource.Failure -> {
-                            binding.progressBar.visibility = View.INVISIBLE
-                            toast("Request Failed", requireContext())
-                        }
-
                     }
+                    is Resource.Loading -> {
+                        binding.progressBar.visibility = View.VISIBLE
+                    }
+                    is Resource.Failure -> {
+                        binding.progressBar.visibility = View.INVISIBLE
+                        toast("Request Failed", requireContext())
+                    }
+
                 }
+
             }
+
         }
 
     }
 
-    private fun sendData(field: CustomApiPost.Field) {
+  /*  private fun sendData(field: CustomApiPost.Field) {
 
         val field = CustomApiPost.Field(
             eventId = eventId,
@@ -361,7 +391,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 platform = "bangalore",
             )
         )
-    }
+    }*/
 
     private fun sendNearbyLogData(address: CustomApiPost.Field.Response.Address) {
 
@@ -375,18 +405,18 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 functionID = "ABCDE",
                 command = "insert",
                 field = CustomApiPost.Field(
-                    startLocation = origin,
+                    startLocation = customOrigin.ifEmpty { origin },
                     queryText = query,
-                    radiusDistanceFrom = "TODO()", // TODO()
-                    radiusDistanceTo = radius.toString(),
+                    radiusDistanceFrom = radius1.toString(),
+                    radiusDistanceTo = radius2.toString(),
                     eventId = eventId,
                     url = "None",
                     startAddress = start_address,
                     response = CustomApiPost.Field.Response(
                         address
                     ),
-                    is_error = false,
-                    error = "None"
+                    is_error = false, //To be corrected
+                    error = "None" //How?????
                 ),
                 updateField = CustomApiPost.UpdateField(1),
                 platform = "bangalore",
@@ -434,7 +464,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         }.toString()
 
         viewModel.setDirectionQuery(
-            origin = origin,
+            origin = customOrigin.ifEmpty { origin },
             destination = destination,
             waypoints = waypoint
         )
@@ -451,6 +481,13 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         val lat = latlng.split(",")[0].toDouble()
         val lng = latlng.split(",")[1].toDouble()
         return LatLng(lat, lng)
+    }
+
+    fun convertCoordinateToLocation(lat: Double, lng: Double): Location {
+        val point = Location(LocationManager.NETWORK_PROVIDER)
+        point.latitude = lat
+        point.longitude = lng
+        return point
     }
 
     @SuppressLint("PotentialBehaviorOverride")
@@ -475,7 +512,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                             }
 
                             cameraPosition =
-                                CameraPosition.Builder().target(stringToCoordinate(origin))
+                                CameraPosition.Builder().target(stringToCoordinate(customOrigin.ifEmpty { origin }))
                                     .tilt(60f)
                                     .zoom(16f)
                                     .bearing(180f)
@@ -503,37 +540,76 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 lifecycleScope.launch {
                     when (it) {
                         is Resource.Success -> {
-                            //draw circumference
-                            val center = stringToCoordinate(origin)
-                            val circleOptions = CircleOptions()
-                            circleOptions.center(center)
-                            circleOptions.radius(radius.toDouble())
-                            circleOptions.fillColor(Color.parseColor("#6DFFFFFF"))
-                            circleOptions.strokeColor(Color.parseColor("#005734"))
-                            circleOptions.strokeWidth(4f)
+                            if(customOrigin.isNotEmpty()){
+                                customOrigin.let { latlng ->
+                                    MarkerOptions()
+                                        .position(stringToCoordinate(latlng))
+                                        .title(customStartLocName)
+                                }.let { mapOption ->
+                                    val marker = mMap.addMarker(
+                                        mapOption
+                                    )
+                                    marker?.tag = resources.getString(R.string.start_marker)
+                                    marker?.showInfoWindow()
+                                }
 
-                            mMap.addCircle(circleOptions)
+                                cameraPosition = customOrigin.let { targetlatlng ->
+                                    CameraPosition.Builder().target(stringToCoordinate(targetlatlng))
+                                        .tilt(60f)
+                                        .zoom(16f)
+                                        .bearing(180f)
+                                        .build()
+                                }
+
+                                mMap.animateCamera(
+                                    CameraUpdateFactory.newCameraPosition(
+                                        cameraPosition
+                                    )
+                                )
+                            }
+
+
+                            //draw circumference 1
+                            val center = stringToCoordinate(customOrigin.ifEmpty { origin })
+                            val circleOptions1 = CircleOptions()
+                            circleOptions1.center(center)
+                            circleOptions1.radius(radius1.toDouble())
+                            circleOptions1.fillColor(Color.parseColor("#6DFFFFFF"))
+                            circleOptions1.strokeColor(Color.parseColor("#005734"))
+                            circleOptions1.strokeWidth(4f)
+                            mMap.addCircle(circleOptions1)
+
+                            //draw circumference 2
+                            val circleOptions2 = CircleOptions()
+                            circleOptions2.center(center)
+                            circleOptions2.radius(radius2.toDouble())
+                            circleOptions2.fillColor(Color.parseColor("#6DFFFFFF"))
+                            circleOptions2.strokeColor(Color.RED)
+                            circleOptions2.strokeWidth(6f)
+                            mMap.addCircle(circleOptions2)
 
 
                             //send places response
-                            sendData(
+                           /* sendData(
                                 CustomApiPost.Field(
                                     reqId = viewModel.getInsertId(),
                                     is_error = viewModel.getIsError(),
                                     data = it.value.toString()
                                 )
-                            )
+                            )*/
 
-                            val selectedLocation = computeDistance(
-                                originLocation,
+                            computeDistance(
+                                if (customOrigin.isEmpty()) originLocation else customLocation,
                                 it.value
-                            ).results?.filter { it.radius!! <= radius }.also { results ->
+                            ).results?.filter { (it.radius!! in radius1..radius2) or (it.radius!! in radius2..radius2)
+                            }.also { results ->
                                 if (results != null) {
                                     if (results.isEmpty()) {
                                         toast(
-                                            "There is no $query within $radius meters",
+                                            "There is no $query within $radius1  and $radius2 meters",
                                             requireContext()
                                         )
+
                                     } else {
                                         for (e in results){
                                             customAPIAddress = e.name.toString()
@@ -563,7 +639,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
 
 
                             cameraPosition =
-                                CameraPosition.Builder().target(stringToCoordinate(origin))
+                                CameraPosition.Builder().target(stringToCoordinate(customOrigin.ifEmpty { origin }))
                                     .tilt(60f)
                                     .zoom(14f)
                                     .bearing(0f)
@@ -633,7 +709,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
             }
 
             viewModel.setDirectionQuery(
-                origin = origin,
+                origin = customOrigin.ifEmpty { origin },
                 destination = coordinateToString(position.latitude, position.longitude)
             )
         }

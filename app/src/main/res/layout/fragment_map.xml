@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/coordinateLayout"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragment.MapFragment">
 
@@ -33,23 +34,23 @@
 
     <AutoCompleteTextView
         android:id="@+id/autoCompleteTextView"
+        style="@style/AutocompleteTextViewStyle"
         android:layout_width="match_parent"
-        android:layout_height="46dp"
+        android:layout_height="56dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
-        android:hint="Search location"
         android:completionThreshold="2"
+        android:hint="Search location"
         android:paddingStart="9dp"
         android:paddingEnd="8dp"
-        android:background="@drawable/edit_bg_transparent"
-        android:textColorHint="@android:color/darker_gray"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+   <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="bottom">
@@ -79,25 +80,55 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
+                    <com.skydoves.powerspinner.PowerSpinnerView
+                        android:id="@+id/searchType_spinner"
+                        style="@style/EditTextStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="24dp"
+                        android:layout_marginEnd="16dp"
+                        android:hint="Search with"
+                        android:padding="8dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:spinner_item_array="@array/searchtype"
+                        app:spinner_popup_animation="bounce" />
+
                     <EditText
-                        android:id="@+id/edt_radius"
+                        android:id="@+id/edt_radius2"
                         style="@style/EditTextStyle"
                         android:layout_width="0dp"
                         android:layout_height="48dp"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="24dp"
-                        android:layout_marginEnd="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:hint="@string/radius"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:hint="@string/radius2"
                         android:importantForAutofill="no"
                         android:inputType="number"
                         android:paddingStart="9dp"
                         android:paddingEnd="8dp"
-                        app:layout_constraintBottom_toTopOf="@+id/search_btn"
-                        app:layout_constraintEnd_toStartOf="@+id/edt_text"
+                        app:layout_constraintEnd_toEndOf="@+id/edt_text"
                         app:layout_constraintHorizontal_bias="0.5"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintStart_toEndOf="@+id/edt_radius1"
+                        app:layout_constraintTop_toBottomOf="@+id/edt_text" />
+
+                    <EditText
+                        android:id="@+id/edt_radius1"
+                        style="@style/EditTextStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_marginEnd="8dp"
+                        android:hint="@string/radius1"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:paddingStart="9dp"
+                        android:paddingEnd="8dp"
+                        app:layout_constraintEnd_toStartOf="@+id/edt_radius2"
+                        app:layout_constraintHorizontal_bias="0.5"
+                        app:layout_constraintHorizontal_chainStyle="spread"
+                        app:layout_constraintStart_toStartOf="@+id/edt_text"
+                        app:layout_constraintTop_toTopOf="@+id/edt_radius2" />
 
 
                     <EditText
@@ -105,32 +136,31 @@
                         style="@style/EditTextStyle"
                         android:layout_width="0dp"
                         android:layout_height="48dp"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="8dp"
                         android:layout_marginEnd="16dp"
                         android:hint="@string/search_text"
                         android:importantForAutofill="no"
                         android:inputType="text"
                         android:paddingStart="9dp"
                         android:paddingEnd="8dp"
-                        app:layout_constraintBottom_toBottomOf="@+id/edt_radius"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintHorizontal_bias="0.5"
-                        app:layout_constraintStart_toEndOf="@+id/edt_radius"
-                        app:layout_constraintTop_toTopOf="@+id/edt_radius" />
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/searchType_spinner" />
 
                     <Button
                         android:id="@+id/search_btn"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:layout_marginTop="8dp"
                         android:layout_marginEnd="16dp"
                         android:fontFamily="@font/poppins_semibold"
                         android:text="@string/search_location"
                         android:textAllCaps="false"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/edt_text" />
+                        app:layout_constraintTop_toBottomOf="@+id/edt_radius2" />
 
                     <Button
                         android:id="@+id/reset_btn"
@@ -139,17 +169,17 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginEnd="16dp"
                         android:layout_marginBottom="16dp"
+                        android:backgroundTint="@color/colorSecondary"
                         android:fontFamily="@font/poppins_semibold"
                         android:text="@string/reset_map"
                         android:textAllCaps="false"
                         android:textColor="@color/black"
-                        android:backgroundTint="@color/colorSecondary"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/search_btn" />
 
-                   
+
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.cardview.widget.CardView>
@@ -157,4 +187,4 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-</FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

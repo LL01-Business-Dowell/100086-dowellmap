@@ -10,7 +10,7 @@
         <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor" >?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor" >?attr/colorOnSecondary</item>
         <!-- Customize your theme here. -->
 
     </style>
@@ -20,5 +20,14 @@
         <item name="android:textColor">@android:color/white</item>
         <item name="searchIcon">@drawable/ic_search_icon_light</item>
        <item name="android:background">@drawable/edit_text_dark_bg</item>
+        <item name="spinner_popup_background">@color/cardview_dark_background</item>
+    </style>
+
+    <style name="AutocompleteTextViewStyle" parent="Theme.DowellMap">
+        <item name="android:textColorHint">@android:color/darker_gray</item>
+        <item name="android:textColor">@android:color/background_dark</item>
+        <item name="android:searchIcon">@drawable/ic_search_icon_light</item>
+        <item name="android:background">@drawable/edit_bg_transparent</item>
+        <item name="android:textSize">14sp</item>
     </style>
 </resources>
