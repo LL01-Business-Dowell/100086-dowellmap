@@ -13,7 +13,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -38,7 +37,6 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
 import com.google.maps.android.PolyUtil
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.cancel
@@ -76,10 +74,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
     lateinit var searchAdapter: SearchAdapter
     lateinit var selectedPlace: LocationModel.Prediction
     private var start_address = ""
-    private var customAPIAddress = ""
-    private var customAPILat_Lon = ""
-    private var customAPIdata = ""
-    private var adresList: MutableList<String> = arrayListOf()
+    private var adresList:  MutableList<List<InputSearchModel.Results>> = arrayListOf()
 
     @Inject
     lateinit var gson: GsonBuilder
@@ -119,14 +114,17 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                          eventId = it.value.string()
                         //Toast.makeText(requireContext(), eventId, Toast.LENGTH_LONG).show()
                         //send place request
+                        for (e in adresList){
+                           for (element in e){
+                               sendNearbyLogData(
+                                   element.name.toString(),
+                                   element.geometry?.location?.getLatLngToString().toString(),
+                                   element.toString()
+                               )
+                           }
 
-                        sendNearbyLogData(
-                                address = CustomApiPost.Field.Response.Address(
-                                    address = customAPIAddress,
-                                    lat_lon = customAPILat_Lon,
-                                    data = customAPIdata
-                                )
-                        )
+                        }
+
 
 
                         sendLogData(
@@ -393,7 +391,18 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         )
     }*/
 
-    private fun sendNearbyLogData(address: CustomApiPost.Field.Response.Address) {
+//    private fun customedatas() {
+//
+//        sendNearbyLogData()
+//    }
+
+    private fun sendNearbyLogData(ctmAddress: String, cstmLatLng: String, cstmData: String) {
+
+       val address = CustomApiPost.Field.Response(
+            address = ctmAddress,
+            lat_lon = cstmLatLng,
+            data = cstmData
+        )
 
         viewModel.sendApiData(
             CustomApiPost(
@@ -412,9 +421,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                     eventId = eventId,
                     url = "None",
                     startAddress = start_address,
-                    response = CustomApiPost.Field.Response(
-                        address
-                    ),
+                    response = arrayListOf(address),
                     is_error = false, //To be corrected
                     error = "None" //How?????
                 ),
@@ -611,13 +618,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                                         )
 
                                     } else {
-                                        for (e in results){
-                                            customAPIAddress = e.name.toString()
-                                            customAPILat_Lon =
-                                                e.geometry?.location?.getLatLngToString()
-                                                    .toString()
-                                            customAPIdata = e.toString()
-                                        }
+                                        adresList.add(results)
+//
 
                                         results.forEach {
 
