@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         val navController = navHostFragment.navController
         appBarConfiguration = AppBarConfiguration(navController.graph)
         binding.toolbar.setupWithNavController(navController, appBarConfiguration)
+        binding.toolbar.title=resources.getString(R.string.app_name)
 
         //get location permission
         getLocationPermission()
@@ -122,7 +123,7 @@ class MainActivity : AppCompatActivity() {
                                 viewModel.setLoginId(it1)
                             }
                         }
-                        toast("Successfully log user",this@MainActivity)
+                        //toast("Successfully log user",this@MainActivity)
                     }
 
                     is Resource.Failure -> {

@@ -58,22 +58,26 @@ data class CustomApiPost(
         @SerializedName("user_name") val userName: String? = null,
         @SerializedName("session_id") val sessionId: String? = null,
         @SerializedName("location_done") val locationDone: String? = null,
-        @SerializedName("response") val response: Response? = null,
+        @SerializedName("response") val response: List<Response>? = null,
 
         ) : Parcelable
     {
         @Parcelize
         data class Response(
-            @SerializedName("address") val address: Address? = null,
-        ) : Parcelable {
-            @Parcelize
-            data class Address(
-                @SerializedName("address") val address: String? = null,
-                @SerializedName("lat_lon") val lat_lon: String? = null,
-                @SerializedName("data") val data: String? = null,
-            ) : Parcelable
-        }
+            @SerializedName("address") val address: String? = null,
+            @SerializedName("lat_lon") val lat_lon: String? = null,
+            @SerializedName("data") val data: Data? = null,
+        ) : Parcelable
     }
+
+    @Parcelize
+    data class Data(
+        var business_status: String?,
+        var price_level: String?,
+        var rating: String?,
+        var reference: String?,
+        var user_ratings_total: String?,
+    ) : Parcelable
 
     @Parcelize
     data class UpdateField(

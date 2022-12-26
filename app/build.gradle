@@ -10,6 +10,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        debug {
+            storeFile file('/Users/michaelalu/dowellmapp')
+            storePassword 'kab..kab'
+            keyAlias 'key0'
+            keyPassword 'kab..kab'
+        }
+    }
     compileSdk 32
 
     defaultConfig {

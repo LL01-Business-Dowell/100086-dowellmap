@@ -26,6 +26,7 @@ class MainActivityViewModel @Inject constructor(
     private val _loginId = MutableLiveData<String>()
     private val _insertId = MutableLiveData<String>()
     private val _isError = MutableLiveData<Boolean>()
+    private val _errorMsg = MutableLiveData<String>()
 
     private val _currentLocationCord = MutableLiveData<Location>()
     val currentLocationCord : LiveData<Location> get() = _currentLocationCord
@@ -108,6 +109,14 @@ class MainActivityViewModel @Inject constructor(
 
     fun getIsError(): Boolean? {
         return _isError.value
+    }
+
+    fun setErrorMsg(msg: String){
+        _errorMsg.value = msg
+    }
+
+    fun getErrorMsg(): String? {
+        return _errorMsg.value
     }
 
 

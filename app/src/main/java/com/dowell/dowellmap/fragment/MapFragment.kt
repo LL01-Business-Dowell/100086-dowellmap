@@ -1,6 +1,7 @@
 package com.dowell.dowellmap.fragment
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
@@ -13,7 +14,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.view.inputmethod.InputMethodManager
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -38,7 +39,6 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
 import com.google.maps.android.PolyUtil
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.cancel
@@ -46,7 +46,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
-import kotlin.collections.ArrayList
 
 
 @AndroidEntryPoint
@@ -80,6 +79,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
     private var customAPILat_Lon = ""
     private var customAPIdata = ""
     private var adresList: MutableList<String> = arrayListOf()
+    private var responseList: ArrayList<CustomApiPost.Field.Response> = arrayListOf()
 
     @Inject
     lateinit var gson: GsonBuilder
@@ -91,8 +91,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
 
-
-
         //Initialize map support fragment
         mapFragment =
             childFragmentManager.findFragmentById(R.id.mapView) as SupportMapFragment
@@ -103,11 +101,17 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         ) { currentLocation ->
             origin = coordinateToString(currentLocation.latitude, currentLocation.longitude)
             originLocation = currentLocation
-            val geoCoder = Geocoder(requireContext(), Locale.getDefault())
-             val startAddress = geoCoder.getFromLocation(currentLocation.latitude, currentLocation.longitude, 3)
-                for(e in startAddress!!){
+            try {
+                val geoCoder = Geocoder(requireContext(), Locale.getDefault())
+                val startAddress =
+                    geoCoder.getFromLocation(currentLocation.latitude, currentLocation.longitude, 3)
+                for (e in startAddress!!) {
                     start_address = "${e.locality}, ${e.countryName}"
                 }
+            }catch(e:Exception){
+                toast("Weak network connection", requireContext())
+                e.printStackTrace()
+            }
 
         }
 
@@ -120,14 +124,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                         //Toast.makeText(requireContext(), eventId, Toast.LENGTH_LONG).show()
                         //send place request
 
-                        sendNearbyLogData(
-                                address = CustomApiPost.Field.Response.Address(
-                                    address = customAPIAddress,
-                                    lat_lon = customAPILat_Lon,
-                                    data = customAPIdata
-                                )
-                        )
-
+                        sendNearbyLogData()
 
                         sendLogData(
                             CustomApiPost.Field(
@@ -157,7 +154,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
             lifecycleScope.launch {
                 when (it) {
                     is Resource.Success -> {
-                        it.value.isSuccess?.let { it1 -> viewModel.setIsError(it1) }
 
                         if (it.value.isSuccess == true) {
                             it.value.inserted_id?.let { it1 -> viewModel.setInsertId(it1) }
@@ -177,9 +173,24 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         with(binding) {
             resetBtn.setOnClickListener {
                 mMap.clear()
+                hideSoftInput()
                 edtRadius1.text.clear()
                 edtRadius2.text.clear()
                 edtText.text.clear()
+                if(customOrigin.isNotEmpty()){
+                    customOrigin.let { latlng ->
+                        MarkerOptions()
+                            .position(stringToCoordinate(latlng))
+                            .title(customStartLocName)
+                    }.let { mapOption ->
+                        val marker = mMap.addMarker(
+                            mapOption
+                        )
+                        marker?.tag = resources.getString(R.string.start_marker)
+                        marker?.showInfoWindow()
+                    }
+
+                }
             }
 
             autoCompleteTextView.addTextChangedListener(object : TextWatcher {
@@ -213,11 +224,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                                 Log.i("DataSize", data.value.predictions?.size.toString())
                                 data.value.predictions?.let {
                                     displayResult(it as ArrayList<LocationModel.Prediction?>)
-
-//                                    for (e in it){
-//                                        Log.d("DEEMOOO::::::", e.g)
-//                                    }
-
                                 }
                             }
                         }
@@ -225,7 +231,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                             toast("Request Failed", requireContext())
                         }
 
-                        else -> {}
+                        is Resource.Loading->{
+
+                        }
+
                     }
 
                 }
@@ -234,25 +243,27 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
 
         binding.searchTypeSpinner.setOnSpinnerItemSelectedListener<String> { _, _, _, newItem ->
             if (newItem == "Specified Location") {
-                binding.autoCompleteTextView.visibility = View.VISIBLE
+                selectedLocationType(current = false)
             } else {
-                binding.autoCompleteTextView.visibility = View.INVISIBLE
-                customOrigin = ""
-                // customLocation.latitude=null
+                selectedLocationType(current = true)
             }
         }
 
         binding.searchBtn.setOnClickListener {
             with(binding){
-                mMap.clear()
-                radius1 =
-                    edtRadius1.text.toString().toInt()
-                        .plus(1)
-                radius2 =
-                    edtRadius2.text.toString().toInt()
-                        .plus(1)
-                query = edtText.text.toString()
-                autocompleteText = binding.autoCompleteTextView.text.toString()
+                hideSoftInput()
+                try {
+                    mMap.clear()
+                    radius1 =
+                        edtRadius1.text.toString().toInt().plus(1)
+                    radius2 =
+                        edtRadius2.text.toString().toInt()
+                            .plus(1)
+                    query = edtText.text.toString()
+                    autocompleteText = binding.autoCompleteTextView.text.toString()
+                }catch (e:Exception){
+                    e.printStackTrace()
+                }
 
                 if (binding.searchTypeSpinner.text == "Search with") {
                     toast("Please select search type", requireContext())
@@ -265,7 +276,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 } else if (binding.autoCompleteTextView.isVisible and autocompleteText.isEmpty()) {
                     toast("Please enter location", requireContext())
                 }else {
-
                     if (origin.isNotEmpty()) {
                         viewModel.setInputSearch(
                             query = query,
@@ -308,6 +318,22 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
         return binding.root
     }
 
+    fun selectedLocationType(current:Boolean){
+        if(current){
+            binding.autoCompleteTextView.visibility = View.INVISIBLE
+            customOrigin = ""
+            cameraPosition =
+                CameraPosition.Builder().target(stringToCoordinate(customOrigin.ifEmpty { origin }))
+                    .tilt(60f)
+                    .zoom(14f)
+                    .bearing(0f)
+                    .build()
+            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+
+        }else{
+            binding.autoCompleteTextView.visibility = View.VISIBLE
+        }
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     private fun displayResult(data: ArrayList<LocationModel.Prediction?>) {
@@ -322,17 +348,16 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
             binding.autoCompleteTextView.setText(selectedPlace.description)
 
             //call place detail api
-            if (viewModel.selectedPredictions.size <= 4) {
-                selectedPlace.place_id?.let { viewModel.getPlaceDetail(it) }
-            }else{
-                toast("Maximum location reached", requireContext())
-            }
+            selectedPlace.place_id?.let { viewModel.getPlaceDetail(it) }
 
             viewModel.locationDetailResults.observe(viewLifecycleOwner) {
 
                 when (it) {
                     is Resource.Success -> {
                         binding.progressBar.visibility = View.INVISIBLE
+
+                        hideSoftInput()
+
                         if (it.value.result != null) {
 
                             //pass object to viewModel for addition
@@ -350,6 +375,34 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                                 }
                             }!!
 
+                            //navigate to location
+                            if(customOrigin.isNotEmpty()){
+                                customOrigin.let { latlng ->
+                                    MarkerOptions()
+                                        .position(stringToCoordinate(latlng))
+                                        .title(customStartLocName)
+                                }.let { mapOption ->
+                                    val marker = mMap.addMarker(
+                                        mapOption
+                                    )
+                                    marker?.tag = resources.getString(R.string.start_marker)
+                                    marker?.showInfoWindow()
+                                }
+
+                                cameraPosition = customOrigin.let { targetlatlng ->
+                                    CameraPosition.Builder().target(stringToCoordinate(targetlatlng))
+                                        .tilt(60f)
+                                        .zoom(16f)
+                                        .bearing(180f)
+                                        .build()
+                                }
+
+                                mMap.animateCamera(
+                                    CameraUpdateFactory.newCameraPosition(
+                                        cameraPosition
+                                    )
+                                )
+                            }
 
                         } else {
                             toast("No result", requireContext())
@@ -371,29 +424,14 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
 
     }
 
-  /*  private fun sendData(field: CustomApiPost.Field) {
+    private fun hideSoftInput() {
+        //hide input window
+        val imm = requireActivity().getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(binding.root.windowToken, 0) // hide
+    }
 
-        val field = CustomApiPost.Field(
-            eventId = eventId,
-            testData = data
-        )
-        viewModel.sendApiData(
-            CustomApiPost(
-                cluster = "dowellmap",
-                database = "dowellmap",
-                collection = "nearby_places_req",
-                document = "nearby_places_req",
-                teamMemberID = "1153",
-                functionID = "ABCDE",
-                command = "insert",
-                field = field,
-                updateField = CustomApiPost.UpdateField(1),
-                platform = "bangalore",
-            )
-        )
-    }*/
 
-    private fun sendNearbyLogData(address: CustomApiPost.Field.Response.Address) {
+    private fun sendNearbyLogData() {
 
         viewModel.sendApiData(
             CustomApiPost(
@@ -411,12 +449,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                     radiusDistanceTo = radius2.toString(),
                     eventId = eventId,
                     url = "None",
-                    startAddress = start_address,
-                    response = CustomApiPost.Field.Response(
-                        address
-                    ),
-                    is_error = false, //To be corrected
-                    error = "None" //How?????
+                    startAddress = if(customOrigin.isEmpty()) start_address else customStartLocName,
+                    response = responseList,
+                    is_error = viewModel.getIsError(),
+                    error = viewModel.getErrorMsg()
                 ),
                 updateField = CustomApiPost.UpdateField(1),
                 platform = "bangalore",
@@ -540,6 +576,9 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 lifecycleScope.launch {
                     when (it) {
                         is Resource.Success -> {
+                            viewModel.setIsError(false)
+                            it.value.status?.let { it1 -> viewModel.setErrorMsg("None") }
+
                             if(customOrigin.isNotEmpty()){
                                 customOrigin.let { latlng ->
                                     MarkerOptions()
@@ -568,7 +607,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                                 )
                             }
 
-
                             //draw circumference 1
                             val center = stringToCoordinate(customOrigin.ifEmpty { origin })
                             val circleOptions1 = CircleOptions()
@@ -587,16 +625,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                             circleOptions2.strokeColor(Color.RED)
                             circleOptions2.strokeWidth(6f)
                             mMap.addCircle(circleOptions2)
-
-
-                            //send places response
-                           /* sendData(
-                                CustomApiPost.Field(
-                                    reqId = viewModel.getInsertId(),
-                                    is_error = viewModel.getIsError(),
-                                    data = it.value.toString()
-                                )
-                            )*/
 
                             computeDistance(
                                 if (customOrigin.isEmpty()) originLocation else customLocation,
@@ -619,7 +647,23 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                                             customAPIdata = e.toString()
                                         }
 
+
+
                                         results.forEach {
+
+                                            responseList.add(
+                                                CustomApiPost.Field.Response(
+                                                    address = it.formatted_address,
+                                                    lat_lon = it.geometry?.location?.getLatLngToString(),
+                                                    data = CustomApiPost.Data(
+                                                        business_status = it.business_status,
+                                                        price_level = it.price_level,
+                                                        rating = it.rating,
+                                                        reference = it.reference,
+                                                        user_ratings_total = it.user_ratings_total
+                                                    )
+                                                )
+                                            )
 
                                             it.geometry?.location?.getLatLng()?.let { latlng ->
                                                 MarkerOptions()
@@ -633,24 +677,20 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                                                 marker?.showInfoWindow()
                                             }
                                         }
+
+
                                     }
                                 }
                             }
 
 
-                            cameraPosition =
-                                CameraPosition.Builder().target(stringToCoordinate(customOrigin.ifEmpty { origin }))
-                                    .tilt(60f)
-                                    .zoom(14f)
-                                    .bearing(0f)
-                                    .build()
-
-                            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
                             binding.progressBar.visibility = View.INVISIBLE
                         }
                         is Resource.Failure -> {
                             binding.progressBar.visibility = View.INVISIBLE
                             toast("Search Failed", requireContext())
+                            viewModel.setIsError(true)
+                            it.errorBody?.let { it1 -> viewModel.setErrorMsg(it1) }
                         }
                         is Resource.Loading -> {
                             binding.progressBar.visibility = View.VISIBLE
