@@ -267,9 +267,12 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
 
                 if (binding.searchTypeSpinner.text == "Search with") {
                     toast("Please select search type", requireContext())
-                } else if (radius1 == 0) {
-                    toast("Please enter the first distance", requireContext())
-                } else if (radius2 == 0) {
+                }
+                else if (radius1 == 0) {
+                    radius1 = 1
+//                    toast("Please enter the first distance", requireContext())
+                }
+                else if (radius2 == 0) {
                     toast("Please enter the second distance", requireContext())
                 } else if (query.isEmpty()) {
                     toast("Please enter search query", requireContext())
