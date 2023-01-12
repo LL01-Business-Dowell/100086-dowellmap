@@ -61,7 +61,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
     private var customOrigin: String = ""
     private var customStartLocName: String = ""
     private lateinit var customLocation: Location
-    private lateinit var query: String
+    private var query: String = ""
     private var eventId: String = ""
     private lateinit var originLocation: Location
     private lateinit var autocompleteText: String
@@ -270,11 +270,79 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                 }
                 else if (radius1 == 0) {
                     radius1 = 1
+                    if (origin.isNotEmpty()) {
+                        viewModel.setInputSearch(
+                            query = query,
+                            location = customOrigin.ifEmpty { origin },
+                            radius = radius2.toString()
+                        ).invokeOnCompletion {
+                            //request 1: get event Id request
+                            viewModel.userCreateEvent(
+                                EventCreationPost(
+                                    platformCode = "FB",
+                                    cityCode = "101",
+                                    dayCode = "0",
+                                    dbCode = "pfm",
+                                    ipAddress = viewModel.getIpAddr(),
+                                    loginID = viewModel.getLoginId(),
+                                    sessionID = viewModel.getLoginId(),
+                                    processCode = "1",
+                                    regionalTime = viewModel.getCurrentTime(),
+                                    dowellTime = viewModel.getCurrentTime(),
+                                    location = customOrigin.ifEmpty { origin },
+                                    objectCode = "1",
+                                    instanceCode = "100086",
+                                    context = "afdafa",
+                                    documentID = "3004",
+                                    rules = "some rules",
+                                    status = "work"
+                                )
+                            )
+                        }
+
+                    } else {
+                        toast("Please enable location", requireContext())
+                    }
 //                    toast("Please enter the first distance", requireContext())
                 }
                 else if (radius2 == 0) {
-                    toast("Please enter the second distance", requireContext())
-                } else if (query.isEmpty()) {
+                    radius2 = 1
+                    if (origin.isNotEmpty()) {
+                        viewModel.setInputSearch(
+                            query = query,
+                            location = customOrigin.ifEmpty { origin },
+                            radius = radius2.toString()
+                        ).invokeOnCompletion {
+                            //request 1: get event Id request
+                            viewModel.userCreateEvent(
+                                EventCreationPost(
+                                    platformCode = "FB",
+                                    cityCode = "101",
+                                    dayCode = "0",
+                                    dbCode = "pfm",
+                                    ipAddress = viewModel.getIpAddr(),
+                                    loginID = viewModel.getLoginId(),
+                                    sessionID = viewModel.getLoginId(),
+                                    processCode = "1",
+                                    regionalTime = viewModel.getCurrentTime(),
+                                    dowellTime = viewModel.getCurrentTime(),
+                                    location = customOrigin.ifEmpty { origin },
+                                    objectCode = "1",
+                                    instanceCode = "100086",
+                                    context = "afdafa",
+                                    documentID = "3004",
+                                    rules = "some rules",
+                                    status = "work"
+                                )
+                            )
+                        }
+
+                    } else {
+                        toast("Please enable location", requireContext())
+                    }
+//                    toast("Please enter the second distance", requireContext())
+                }
+                else if (query.isEmpty()) {
                     toast("Please enter search query", requireContext())
                 } else if (binding.autoCompleteTextView.isVisible and autocompleteText.isEmpty()) {
                     toast("Please enter location", requireContext())
