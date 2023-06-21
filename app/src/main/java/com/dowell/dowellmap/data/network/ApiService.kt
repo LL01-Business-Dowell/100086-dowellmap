@@ -1,5 +1,6 @@
 package com.dowell.dowellmap.data.network
 
+import com.dowell.dowellmap.BuildConfig
 import com.dowell.dowellmap.data.model.*
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
@@ -16,7 +17,7 @@ interface ApiService {
     @GET("place/autocomplete/json")
     suspend fun getPredictions(
         @Query("input") input : String,
-        @Query("key") key : String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
+        @Query("key") key : String = BuildConfig.MAPS_API_KEY
     ) : LocationModel
 
  @GET("place/textsearch/json")
@@ -24,13 +25,13 @@ interface ApiService {
      @Query("query") query: String,
      @Query("location") location: String,
      @Query("radius") radius: Int,
-     @Query("key") key: String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
+     @Query("key") key: String = BuildConfig.MAPS_API_KEY
     ) : InputSearchModel
 
     @GET("place/details/json")
     suspend fun getLocationDetail(
         @Query("place_id") place_id : String,
-        @Query("key") key : String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
+        @Query("key") key : String = BuildConfig.MAPS_API_KEY
     ) : PlaceDetail
 
     @GET("directions/json")
@@ -39,20 +40,20 @@ interface ApiService {
         @Query("destination") destination: String,
         @Query("mode") mode: String="driving",
         @Query("waypoints") waypoints: String?=null,
-        @Query("key") key: String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
+        @Query("key") key: String = BuildConfig.MAPS_API_KEY
     ) : DirectionResponse
 
     @GET("geocode/json")
     suspend fun getGeocodeDetail(
         @Query("address") address : String,
-        @Query("key") key : String = "AIzaSyCubgs2iI78Egk_mXEbr3gRHE69aGsy1d8"
+        @Query("key") key : String = BuildConfig.MAPS_API_KEY
     ) : GeocodeModel
 
 
     @POST("linkbased/")
     suspend fun logUser(@Body logpost: LogPost): UserLogResponse
 
-    @POST("event_creation")
+    @POST("create_event/")
     suspend fun eventCreation(@Body eventCreationPost: EventCreationPost): ResponseBody
 
     @POST("/")
@@ -61,7 +62,7 @@ interface ApiService {
     companion object {
         fun getGoogleApiInstance(): ApiService {
             return Retrofit.Builder()
-                .baseUrl("https://maps.googleapis.com/maps/api/")
+                .baseUrl(BuildConfig.BASE_URL)
                 .client(getRetrofitClient())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
@@ -79,7 +80,7 @@ interface ApiService {
 
         fun getEventCreationInstance() : ApiService {
             return Retrofit.Builder()
-                .baseUrl("https://100003.pythonanywhere.com/")
+                .baseUrl("https://uxlivinglab.pythonanywhere.com/")
                 .client(getRetrofitClient())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()

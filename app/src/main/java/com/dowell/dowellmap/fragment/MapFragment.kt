@@ -303,7 +303,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
                     } else {
                         toast("Please enable location", requireContext())
                     }
-//                    toast("Please enter the first distance", requireContext())
+
                 }
                 else if (radius2 == 0) {
                     radius2 = 1
@@ -606,6 +606,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
             if (view != null) {
                     when (it) {
                         is Resource.Success -> {
+
                             //Draw routing path
                             it.value.routes?.get(0)?.legs?.forEach { legs ->
                                 path.clear()
@@ -777,7 +778,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMarkerClickListe
     private fun addPathToMap(path: MutableList<List<LatLng>>) {
         for (i in 0 until path.size) {
             polylines.add(mMap.addPolyline(
-                PolylineOptions().addAll(path[i])
+                PolylineOptions().addAll(
+                    path[i])
                     .color(
                         Color.RED
                     )
